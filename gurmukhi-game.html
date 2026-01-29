@@ -631,12 +631,17 @@
                     <div style="display: flex; align-items: center; gap: 0.5rem;">
                         <label for="categorySelect" style="color: var(--text-light); font-weight: 600;">Category:</label>
                         <select id="categorySelect" onchange="changeLearnCategory()" style="padding: 0.5rem 1rem; border-radius: 8px; border: 2px solid var(--primary); font-size: 1rem; font-weight: 600; color: var(--text-dark); background: white; cursor: pointer;">
-                            <option value="alphabet">📚 Alphabet</option>
+                            <option value="alphabet">🔤 Alphabet</option>
+                            <option value="family">👨‍👩‍👧‍👦 Family & People</option>
                             <option value="animals">🐾 Animals</option>
+                            <option value="food">🍽️ Food & Drink</option>
+                            <option value="objects">🎈 Objects & Toys</option>
+                            <option value="body">👋 Body Parts</option>
                             <option value="colors">🎨 Colors</option>
                             <option value="numbers">🔢 Numbers</option>
-                            <option value="family">👨‍👩‍👧‍👦 Family</option>
-                            <option value="objects">🎈 Objects</option>
+                            <option value="actions">🏃 Actions</option>
+                            <option value="nature">🌍 Nature & World</option>
+                            <option value="descriptors">💬 Descriptors & Social</option>
                         </select>
                     </div>
                 </div>
@@ -817,8 +822,188 @@
     <script>
         // ==================== DATA STRUCTURES ====================
         
-        // Complete word pack system - easily expandable
+        // Complete word pack system - 100 words across 10 categories
         const wordPacks = {
+            family: {
+                name: 'Family & People',
+                emoji: '👨‍👩‍👧‍👦',
+                difficulty: 'beginner',
+                words: [
+                    { gurmukhi: 'ਮਾਂ', name: 'Maa', meaning: 'Mother', pronunciation: ['maa', 'ma', 'maan'], image: '👩' },
+                    { gurmukhi: 'ਪਿਉ', name: 'Pio', meaning: 'Father', pronunciation: ['pio', 'peo', 'piyo'], image: '👨' },
+                    { gurmukhi: 'ਭੈਣ', name: 'Bhain', meaning: 'Sister', pronunciation: ['bhain', 'bhen', 'ben'], image: '👧' },
+                    { gurmukhi: 'ਭਰਾ', name: 'Bhra', meaning: 'Brother', pronunciation: ['bhra', 'bhara', 'bara'], image: '👦' },
+                    { gurmukhi: 'ਬੱਚਾ', name: 'Bacha', meaning: 'Child', pronunciation: ['bacha', 'bachha', 'bachchaa'], image: '👶' },
+                    { gurmukhi: 'ਦੋਸਤ', name: 'Dost', meaning: 'Friend', pronunciation: ['dost', 'dost'], image: '👥' },
+                    { gurmukhi: 'ਅਧਿਆਪਕ', name: 'Adhyapak', meaning: 'Teacher', pronunciation: ['adhyapak', 'teacher', 'adhiapak'], image: '👨‍🏫' },
+                    { gurmukhi: 'ਬੱਚੇ', name: 'Bache', meaning: 'Children', pronunciation: ['bache', 'bachche', 'bachchay'], image: '👶👶' },
+                    { gurmukhi: 'ਘਰ ਵਾਲੇ', name: 'Ghar Wale', meaning: 'Family', pronunciation: ['ghar wale', 'gharwale', 'ghar vale'], image: '👨‍👩‍👧‍👦' },
+                    { gurmukhi: 'ਮੈਂ', name: 'Main', meaning: 'I / Me', pronunciation: ['main', 'mein', 'me'], image: '🙋' }
+                ]
+            },
+            
+            animals: {
+                name: 'Animals',
+                emoji: '🐾',
+                difficulty: 'beginner',
+                words: [
+                    { gurmukhi: 'ਕੁੱਤਾ', name: 'Kutta', meaning: 'Dog', pronunciation: ['kutta', 'kuta', 'koota'], image: '🐕' },
+                    { gurmukhi: 'ਬਿੱਲੀ', name: 'Billi', meaning: 'Cat', pronunciation: ['billi', 'billy', 'bili'], image: '🐱' },
+                    { gurmukhi: 'ਗਾਂ', name: 'Gaan', meaning: 'Cow', pronunciation: ['gaan', 'ga', 'gaa'], image: '🐄' },
+                    { gurmukhi: 'ਘੋੜਾ', name: 'Ghora', meaning: 'Horse', pronunciation: ['ghora', 'gora', 'ghoda'], image: '🐴' },
+                    { gurmukhi: 'ਪੰਛੀ', name: 'Panchi', meaning: 'Bird', pronunciation: ['panchi', 'panchee', 'paanchi'], image: '🐦' },
+                    { gurmukhi: 'ਮੱਛੀ', name: 'Machhi', meaning: 'Fish', pronunciation: ['machhi', 'machi', 'machhee'], image: '🐟' },
+                    { gurmukhi: 'ਬੱਕਰੀ', name: 'Bakkri', meaning: 'Goat', pronunciation: ['bakkri', 'bakri', 'bakree'], image: '🐐' },
+                    { gurmukhi: 'ਸ਼ੇਰ', name: 'Sher', meaning: 'Lion', pronunciation: ['sher', 'shair', 'share'], image: '🦁' },
+                    { gurmukhi: 'ਹਾਥੀ', name: 'Haathi', meaning: 'Elephant', pronunciation: ['haathi', 'hathi', 'haati'], image: '🐘' },
+                    { gurmukhi: 'ਚਿੜੀ', name: 'Chiri', meaning: 'Sparrow', pronunciation: ['chiri', 'chiree', 'chidee'], image: '🐦' }
+                ]
+            },
+            
+            food: {
+                name: 'Food & Drink',
+                emoji: '🍽️',
+                difficulty: 'beginner',
+                words: [
+                    { gurmukhi: 'ਪਾਣੀ', name: 'Paani', meaning: 'Water', pronunciation: ['paani', 'pani', 'paanee'], image: '💧' },
+                    { gurmukhi: 'ਦੁੱਧ', name: 'Dudh', meaning: 'Milk', pronunciation: ['dudh', 'dud', 'doodh'], image: '🥛' },
+                    { gurmukhi: 'ਰੋਟੀ', name: 'Roti', meaning: 'Bread', pronunciation: ['roti', 'rotee', 'rotti'], image: '🫓' },
+                    { gurmukhi: 'ਚੌਲ', name: 'Chaul', meaning: 'Rice', pronunciation: ['chaul', 'chawal', 'chol'], image: '🍚' },
+                    { gurmukhi: 'ਫਲ', name: 'Phal', meaning: 'Fruit', pronunciation: ['phal', 'fal', 'phul'], image: '🍎' },
+                    { gurmukhi: 'ਸੇਬ', name: 'Seb', meaning: 'Apple', pronunciation: ['seb', 'seb', 'saib'], image: '🍎' },
+                    { gurmukhi: 'ਕੇਲਾ', name: 'Kela', meaning: 'Banana', pronunciation: ['kela', 'kelaa', 'kaila'], image: '🍌' },
+                    { gurmukhi: 'ਖਾਣਾ', name: 'Khana', meaning: 'Food', pronunciation: ['khana', 'khaana', 'kaana'], image: '🍽️' },
+                    { gurmukhi: 'ਜੂਸ', name: 'Juice', meaning: 'Juice', pronunciation: ['juice', 'jus', 'joos'], image: '🧃' },
+                    { gurmukhi: 'ਮਿੱਠਾ', name: 'Mitha', meaning: 'Sweet', pronunciation: ['mitha', 'meetha', 'mithaa'], image: '🍬' }
+                ]
+            },
+            
+            objects: {
+                name: 'Objects & Toys',
+                emoji: '🎈',
+                difficulty: 'intermediate',
+                words: [
+                    { gurmukhi: 'ਗੇਂਦ', name: 'Gend', meaning: 'Ball', pronunciation: ['gend', 'gaind', 'gind'], image: '⚽' },
+                    { gurmukhi: 'ਕਿਤਾਬ', name: 'Kitab', meaning: 'Book', pronunciation: ['kitab', 'kitaab', 'ketab'], image: '📚' },
+                    { gurmukhi: 'ਕਲਮ', name: 'Kalam', meaning: 'Pen', pronunciation: ['kalam', 'kalam', 'qalam'], image: '🖊️' },
+                    { gurmukhi: 'ਕੁਰਸੀ', name: 'Kursi', meaning: 'Chair', pronunciation: ['kursi', 'kursee', 'kurshi'], image: '🪑' },
+                    { gurmukhi: 'ਮੇਜ਼', name: 'Mez', meaning: 'Table', pronunciation: ['mez', 'maiz', 'maze'], image: '🪑' },
+                    { gurmukhi: 'ਕਾਰ', name: 'Car', meaning: 'Car', pronunciation: ['car', 'kaar', 'gadi'], image: '🚗' },
+                    { gurmukhi: 'ਖਿਡੌਣਾ', name: 'Khidona', meaning: 'Toy', pronunciation: ['khidona', 'khilona', 'kidona'], image: '🧸' },
+                    { gurmukhi: 'ਬੈਗ', name: 'Bag', meaning: 'Bag', pronunciation: ['bag', 'baig', 'beg'], image: '🎒' },
+                    { gurmukhi: 'ਘੜੀ', name: 'Ghari', meaning: 'Clock', pronunciation: ['ghari', 'gharee', 'ghadi'], image: '⏰' },
+                    { gurmukhi: 'ਦਰਵਾਜ਼ਾ', name: 'Darwaza', meaning: 'Door', pronunciation: ['darwaza', 'darwaaza', 'darvaaza'], image: '🚪' }
+                ]
+            },
+            
+            body: {
+                name: 'Body Parts',
+                emoji: '👋',
+                difficulty: 'beginner',
+                words: [
+                    { gurmukhi: 'ਸਿਰ', name: 'Sir', meaning: 'Head', pronunciation: ['sir', 'sar', 'seer'], image: '👤' },
+                    { gurmukhi: 'ਅੱਖ', name: 'Akh', meaning: 'Eye', pronunciation: ['akh', 'akkh', 'ak'], image: '👁️' },
+                    { gurmukhi: 'ਕੰਨ', name: 'Kan', meaning: 'Ear', pronunciation: ['kan', 'kann', 'kaan'], image: '👂' },
+                    { gurmukhi: 'ਨੱਕ', name: 'Nak', meaning: 'Nose', pronunciation: ['nak', 'nakk', 'naak'], image: '👃' },
+                    { gurmukhi: 'ਮੂੰਹ', name: 'Moonh', meaning: 'Mouth', pronunciation: ['moonh', 'munh', 'moo'], image: '👄' },
+                    { gurmukhi: 'ਹੱਥ', name: 'Hatth', meaning: 'Hand', pronunciation: ['hatth', 'hath', 'hat'], image: '✋' },
+                    { gurmukhi: 'ਪੈਰ', name: 'Pair', meaning: 'Foot', pronunciation: ['pair', 'per', 'paer'], image: '🦶' },
+                    { gurmukhi: 'ਉਂਗਲ', name: 'Ungal', meaning: 'Finger', pronunciation: ['ungal', 'ungul', 'ungl'], image: '☝️' },
+                    { gurmukhi: 'ਦੰਦ', name: 'Dand', meaning: 'Tooth', pronunciation: ['dand', 'dant', 'dund'], image: '🦷' },
+                    { gurmukhi: 'ਵਾਲ', name: 'Val', meaning: 'Hair', pronunciation: ['val', 'vaal', 'waal'], image: '💇' }
+                ]
+            },
+            
+            colors: {
+                name: 'Colors',
+                emoji: '🎨',
+                difficulty: 'beginner',
+                words: [
+                    { gurmukhi: 'ਲਾਲ', name: 'Laal', meaning: 'Red', pronunciation: ['laal', 'lal', 'lall'], image: '🔴' },
+                    { gurmukhi: 'ਨੀਲਾ', name: 'Neela', meaning: 'Blue', pronunciation: ['neela', 'nila', 'neelaa'], image: '🔵' },
+                    { gurmukhi: 'ਹਰਾ', name: 'Hara', meaning: 'Green', pronunciation: ['hara', 'haraa', 'haara'], image: '🟢' },
+                    { gurmukhi: 'ਪੀਲਾ', name: 'Peela', meaning: 'Yellow', pronunciation: ['peela', 'pila', 'peelaa'], image: '🟡' },
+                    { gurmukhi: 'ਕਾਲਾ', name: 'Kaala', meaning: 'Black', pronunciation: ['kaala', 'kala', 'kaalaa'], image: '⚫' },
+                    { gurmukhi: 'ਚਿੱਟਾ', name: 'Chitta', meaning: 'White', pronunciation: ['chitta', 'chita', 'chhitta'], image: '⚪' },
+                    { gurmukhi: 'ਭੂਰਾ', name: 'Bhura', meaning: 'Brown', pronunciation: ['bhura', 'bhoora', 'bura'], image: '🟤' },
+                    { gurmukhi: 'ਗੁਲਾਬੀ', name: 'Gulabi', meaning: 'Pink', pronunciation: ['gulabi', 'gulabee', 'gulaabi'], image: '🌸' }
+                ]
+            },
+            
+            numbers: {
+                name: 'Numbers',
+                emoji: '🔢',
+                difficulty: 'beginner',
+                words: [
+                    { gurmukhi: 'ਇੱਕ', name: 'Ikk', meaning: 'One', pronunciation: ['ikk', 'ik', 'ek'], image: '1️⃣' },
+                    { gurmukhi: 'ਦੋ', name: 'Do', meaning: 'Two', pronunciation: ['do', 'doh', 'doe'], image: '2️⃣' },
+                    { gurmukhi: 'ਤਿੰਨ', name: 'Tinn', meaning: 'Three', pronunciation: ['tinn', 'tin', 'teen'], image: '3️⃣' },
+                    { gurmukhi: 'ਚਾਰ', name: 'Chaar', meaning: 'Four', pronunciation: ['chaar', 'char', 'chhar'], image: '4️⃣' },
+                    { gurmukhi: 'ਪੰਜ', name: 'Panj', meaning: 'Five', pronunciation: ['panj', 'panch', 'paanj'], image: '5️⃣' },
+                    { gurmukhi: 'ਛੇ', name: 'Chhe', meaning: 'Six', pronunciation: ['chhe', 'chhay', 'che'], image: '6️⃣' },
+                    { gurmukhi: 'ਸੱਤ', name: 'Satt', meaning: 'Seven', pronunciation: ['satt', 'sat', 'sut'], image: '7️⃣' },
+                    { gurmukhi: 'ਅੱਠ', name: 'Atth', meaning: 'Eight', pronunciation: ['atth', 'ath', 'aath'], image: '8️⃣' },
+                    { gurmukhi: 'ਨੌਂ', name: 'Naun', meaning: 'Nine', pronunciation: ['naun', 'nau', 'no'], image: '9️⃣' },
+                    { gurmukhi: 'ਦਸ', name: 'Das', meaning: 'Ten', pronunciation: ['das', 'dus', 'duss'], image: '🔟' }
+                ]
+            },
+            
+            actions: {
+                name: 'Actions',
+                emoji: '🏃',
+                difficulty: 'intermediate',
+                words: [
+                    { gurmukhi: 'ਖਾਣਾ', name: 'Khana', meaning: 'Eat', pronunciation: ['khana', 'khaana', 'kaana'], image: '🍽️' },
+                    { gurmukhi: 'ਪੀਣਾ', name: 'Peena', meaning: 'Drink', pronunciation: ['peena', 'pina', 'peenaa'], image: '🥤' },
+                    { gurmukhi: 'ਦੌੜਨਾ', name: 'Daurna', meaning: 'Run', pronunciation: ['daurna', 'dodna', 'dorna'], image: '🏃' },
+                    { gurmukhi: 'ਬੈਠਣਾ', name: 'Baithna', meaning: 'Sit', pronunciation: ['baithna', 'bethna', 'baitna'], image: '🪑' },
+                    { gurmukhi: 'ਖੜ੍ਹਾ', name: 'Khara', meaning: 'Stand', pronunciation: ['khara', 'kharaa', 'kara'], image: '🧍' },
+                    { gurmukhi: 'ਸੌਣਾ', name: 'Sauna', meaning: 'Sleep', pronunciation: ['sauna', 'sona', 'saunaa'], image: '😴' },
+                    { gurmukhi: 'ਖੇਡਣਾ', name: 'Khedna', meaning: 'Play', pronunciation: ['khedna', 'khelna', 'kaidna'], image: '⚽' },
+                    { gurmukhi: 'ਦੇਖਣਾ', name: 'Dekhna', meaning: 'See', pronunciation: ['dekhna', 'dekna', 'daikhna'], image: '👀' },
+                    { gurmukhi: 'ਸੁਣਨਾ', name: 'Sunna', meaning: 'Hear', pronunciation: ['sunna', 'suna', 'sunana'], image: '👂' },
+                    { gurmukhi: 'ਜਾਣਾ', name: 'Jana', meaning: 'Go', pronunciation: ['jana', 'jaana', 'janna'], image: '🚶' }
+                ]
+            },
+            
+            nature: {
+                name: 'Nature & World',
+                emoji: '🌍',
+                difficulty: 'beginner',
+                words: [
+                    { gurmukhi: 'ਸੂਰਜ', name: 'Sooraj', meaning: 'Sun', pronunciation: ['sooraj', 'suraj', 'sooraj'], image: '☀️' },
+                    { gurmukhi: 'ਚੰਦ', name: 'Chand', meaning: 'Moon', pronunciation: ['chand', 'chund', 'chaand'], image: '🌙' },
+                    { gurmukhi: 'ਤਾਰਾ', name: 'Tara', meaning: 'Star', pronunciation: ['tara', 'taraa', 'taara'], image: '⭐' },
+                    { gurmukhi: 'ਦਰੱਖ਼ਤ', name: 'Darakht', meaning: 'Tree', pronunciation: ['darakht', 'darakhat', 'darakht'], image: '🌳' },
+                    { gurmukhi: 'ਫੁੱਲ', name: 'Phull', meaning: 'Flower', pronunciation: ['phull', 'phul', 'fool'], image: '🌸' },
+                    { gurmukhi: 'ਮੀਂਹ', name: 'Meeh', meaning: 'Rain', pronunciation: ['meeh', 'meh', 'menh'], image: '🌧️' },
+                    { gurmukhi: 'ਹਵਾ', name: 'Hawa', meaning: 'Air', pronunciation: ['hawa', 'havaa', 'hawaa'], image: '💨' }
+                ]
+            },
+            
+            descriptors: {
+                name: 'Descriptors & Social',
+                emoji: '💬',
+                difficulty: 'intermediate',
+                words: [
+                    { gurmukhi: 'ਵੱਡਾ', name: 'Wadda', meaning: 'Big', pronunciation: ['wadda', 'vada', 'wadaa'], image: '📏' },
+                    { gurmukhi: 'ਛੋਟਾ', name: 'Chhota', meaning: 'Small', pronunciation: ['chhota', 'chota', 'chhotta'], image: '🔍' },
+                    { gurmukhi: 'ਚੰਗਾ', name: 'Changa', meaning: 'Good', pronunciation: ['changa', 'changaa', 'chaanga'], image: '👍' },
+                    { gurmukhi: 'ਮਾੜਾ', name: 'Mada', meaning: 'Bad', pronunciation: ['mada', 'maada', 'mara'], image: '👎' },
+                    { gurmukhi: 'ਖੁਸ਼', name: 'Khush', meaning: 'Happy', pronunciation: ['khush', 'kush', 'khus'], image: '😊' },
+                    { gurmukhi: 'ਉਦਾਸ', name: 'Udaas', meaning: 'Sad', pronunciation: ['udaas', 'udas', 'udasss'], image: '😢' },
+                    { gurmukhi: 'ਤੇਜ਼', name: 'Tez', meaning: 'Fast', pronunciation: ['tez', 'taiz', 'tezz'], image: '⚡' },
+                    { gurmukhi: 'ਹੌਲੀ', name: 'Hauli', meaning: 'Slow', pronunciation: ['hauli', 'holi', 'haulee'], image: '🐢' },
+                    { gurmukhi: 'ਗਰਮ', name: 'Garam', meaning: 'Hot', pronunciation: ['garam', 'garam', 'garaam'], image: '🔥' },
+                    { gurmukhi: 'ਠੰਢਾ', name: 'Thanda', meaning: 'Cold', pronunciation: ['thanda', 'tanda', 'thandaa'], image: '🧊' },
+                    { gurmukhi: 'ਹਾਂ', name: 'Haan', meaning: 'Yes', pronunciation: ['haan', 'han', 'haa'], image: '✅' },
+                    { gurmukhi: 'ਨਹੀਂ', name: 'Nahi', meaning: 'No', pronunciation: ['nahi', 'nahin', 'nai'], image: '❌' },
+                    { gurmukhi: 'ਮੇਰਾ', name: 'Mera', meaning: 'Mine', pronunciation: ['mera', 'meraa', 'maira'], image: '👈' },
+                    { gurmukhi: 'ਤੇਰਾ', name: 'Tera', meaning: 'Yours', pronunciation: ['tera', 'teraa', 'taira'], image: '👉' },
+                    { gurmukhi: 'ਧੰਨਵਾਦ', name: 'Dhannavaad', meaning: 'Thank You', pronunciation: ['dhannavaad', 'thank you', 'dhanyavaad'], image: '🙏' }
+                ]
+            },
+            
             alphabet: {
                 name: 'Alphabet',
                 emoji: '🔤',
@@ -859,77 +1044,6 @@
                     { gurmukhi: 'ਲ', name: 'Lalla', meaning: 'Letter Lalla', pronunciation: ['lalla', 'lala', 'la'], image: '' },
                     { gurmukhi: 'ਵ', name: 'Vavva', meaning: 'Letter Vavva', pronunciation: ['vavva', 'vava', 'va'], image: '' },
                     { gurmukhi: 'ੜ', name: 'Rarra', meaning: 'Letter Rarra', pronunciation: ['rarra', 'rara', 'ra'], image: '' }
-                ]
-            },
-            
-            animals: {
-                name: 'Animals',
-                emoji: '🐾',
-                difficulty: 'beginner',
-                words: [
-                    { gurmukhi: 'ਬਿੱਲੀ', name: 'Billi', meaning: 'Cat', pronunciation: ['billi', 'billi', 'billy', 'bili'], image: '🐱' },
-                    { gurmukhi: 'ਕੁੱਤਾ', name: 'Kutta', meaning: 'Dog', pronunciation: ['kutta', 'kuta', 'koota'], image: '🐕' },
-                    { gurmukhi: 'ਘੋੜਾ', name: 'Ghora', meaning: 'Horse', pronunciation: ['ghora', 'gora', 'ghoda'], image: '🐴' },
-                    { gurmukhi: 'ਹਾਥੀ', name: 'Hathi', meaning: 'Elephant', pronunciation: ['hathi', 'haathi', 'hati'], image: '🐘' },
-                    { gurmukhi: 'ਸ਼ੇਰ', name: 'Sher', meaning: 'Lion', pronunciation: ['sher', 'shair', 'share'], image: '🦁' },
-                    { gurmukhi: 'ਚੂਹਾ', name: 'Chuha', meaning: 'Mouse', pronunciation: ['chuha', 'chooa', 'chua'], image: '🐭' },
-                    { gurmukhi: 'ਪੰਛੀ', name: 'Panchi', meaning: 'Bird', pronunciation: ['panchi', 'panchee', 'paanchi'], image: '🐦' },
-                    { gurmukhi: 'ਮੱਛੀ', name: 'Machhi', meaning: 'Fish', pronunciation: ['machhi', 'machi', 'machhee'], image: '🐟' }
-                ]
-            },
-            
-            colors: {
-                name: 'Colors',
-                emoji: '🎨',
-                difficulty: 'beginner',
-                words: [
-                    { gurmukhi: 'ਲਾਲ', name: 'Laal', meaning: 'Red', pronunciation: ['laal', 'lal', 'lall'], image: '🔴' },
-                    { gurmukhi: 'ਨੀਲਾ', name: 'Neela', meaning: 'Blue', pronunciation: ['neela', 'nila', 'neelaa'], image: '🔵' },
-                    { gurmukhi: 'ਪੀਲਾ', name: 'Peela', meaning: 'Yellow', pronunciation: ['peela', 'pila', 'peelaa'], image: '🟡' },
-                    { gurmukhi: 'ਹਰਾ', name: 'Hara', meaning: 'Green', pronunciation: ['hara', 'haraa', 'haara'], image: '🟢' },
-                    { gurmukhi: 'ਕਾਲਾ', name: 'Kala', meaning: 'Black', pronunciation: ['kala', 'kalaa', 'kaala'], image: '⚫' },
-                    { gurmukhi: 'ਚਿੱਟਾ', name: 'Chitta', meaning: 'White', pronunciation: ['chitta', 'chita', 'chhitta'], image: '⚪' }
-                ]
-            },
-            
-            numbers: {
-                name: 'Numbers',
-                emoji: '🔢',
-                difficulty: 'intermediate',
-                words: [
-                    { gurmukhi: 'ਇੱਕ', name: 'Ikk', meaning: 'One', pronunciation: ['ikk', 'ik', 'ek'], image: '1️⃣' },
-                    { gurmukhi: 'ਦੋ', name: 'Do', meaning: 'Two', pronunciation: ['do', 'doh', 'doe'], image: '2️⃣' },
-                    { gurmukhi: 'ਤਿੰਨ', name: 'Tinn', meaning: 'Three', pronunciation: ['tinn', 'tin', 'teen'], image: '3️⃣' },
-                    { gurmukhi: 'ਚਾਰ', name: 'Char', meaning: 'Four', pronunciation: ['char', 'chaar', 'chhar'], image: '4️⃣' },
-                    { gurmukhi: 'ਪੰਜ', name: 'Panj', meaning: 'Five', pronunciation: ['panj', 'panch', 'paanj'], image: '5️⃣' }
-                ]
-            },
-            
-            family: {
-                name: 'Family',
-                emoji: '👨‍👩‍👧‍👦',
-                difficulty: 'beginner',
-                words: [
-                    { gurmukhi: 'ਮਾਂ', name: 'Maa', meaning: 'Mother', pronunciation: ['maa', 'ma', 'maan'], image: '👩' },
-                    { gurmukhi: 'ਪਿਤਾ', name: 'Pita', meaning: 'Father', pronunciation: ['pita', 'pitaa', 'papa'], image: '👨' },
-                    { gurmukhi: 'ਭਰਾ', name: 'Bhra', meaning: 'Brother', pronunciation: ['bhra', 'bhraa', 'bhara'], image: '👦' },
-                    { gurmukhi: 'ਭੈਣ', name: 'Bhain', meaning: 'Sister', pronunciation: ['bhain', 'bhen', 'bhaan'], image: '👧' },
-                    { gurmukhi: 'ਦਾਦਾ', name: 'Dada', meaning: 'Grandfather', pronunciation: ['dada', 'daadaa', 'dadaji'], image: '👴' },
-                    { gurmukhi: 'ਦਾਦੀ', name: 'Dadi', meaning: 'Grandmother', pronunciation: ['dadi', 'daadee', 'dadiji'], image: '👵' }
-                ]
-            },
-            
-            objects: {
-                name: 'Common Objects',
-                emoji: '🎈',
-                difficulty: 'intermediate',
-                words: [
-                    { gurmukhi: 'ਗੇਂਦ', name: 'Gend', meaning: 'Ball', pronunciation: ['gend', 'gaind', 'gind'], image: '⚽' },
-                    { gurmukhi: 'ਕਿਤਾਬ', name: 'Kitab', meaning: 'Book', pronunciation: ['kitab', 'kitaab', 'ketab'], image: '📚' },
-                    { gurmukhi: 'ਪਾਣੀ', name: 'Pani', meaning: 'Water', pronunciation: ['pani', 'paani', 'paanee'], image: '💧' },
-                    { gurmukhi: 'ਖਾਣਾ', name: 'Khana', meaning: 'Food', pronunciation: ['khana', 'khaana', 'kaana'], image: '🍽️' },
-                    { gurmukhi: 'ਘਰ', name: 'Ghar', meaning: 'House', pronunciation: ['ghar', 'gharr', 'ghur'], image: '🏠' },
-                    { gurmukhi: 'ਕਾਰ', name: 'Car', meaning: 'Car', pronunciation: ['car', 'kaar', 'gadi'], image: '🚗' }
                 ]
             }
         };
