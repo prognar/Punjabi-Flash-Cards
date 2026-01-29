@@ -625,9 +625,20 @@
         <!-- ==================== LEARN MODE SCREEN ==================== -->
         <div id="learnScreen" class="screen">
             <div class="game-card">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
                     <span style="color: var(--text-light);">Card <span id="learnCurrentCard">1</span> of <span id="learnTotalCards">35</span></span>
-                    <span style="color: var(--text-light);">Category: <span id="learnCategory">Alphabet</span></span>
+                    
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <label for="categorySelect" style="color: var(--text-light); font-weight: 600;">Category:</label>
+                        <select id="categorySelect" onchange="changeLearnCategory()" style="padding: 0.5rem 1rem; border-radius: 8px; border: 2px solid var(--primary); font-size: 1rem; font-weight: 600; color: var(--text-dark); background: white; cursor: pointer;">
+                            <option value="alphabet">📚 Alphabet</option>
+                            <option value="animals">🐾 Animals</option>
+                            <option value="colors">🎨 Colors</option>
+                            <option value="numbers">🔢 Numbers</option>
+                            <option value="family">👨‍👩‍👧‍👦 Family</option>
+                            <option value="objects">🎈 Objects</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div class="word-display">
@@ -757,7 +768,49 @@
             <p>You scored <span id="finalScore">0</span> points!</p>
             <p style="margin-top: 1rem;">Enter your name:</p>
             <input type="text" id="playerName" placeholder="Your Name" maxlength="20">
-            <button class="btn-success" onclick="saveScore()">Save Score</button>
+            <button class="btn-success" onclick="saveScoreAndShowSummary()">Continue</button>
+        </div>
+    </div>
+
+    <!-- ==================== CHALLENGE SUMMARY SCREEN ==================== -->
+    <div id="summaryScreen" class="screen">
+        <div class="scoreboard">
+            <div class="scoreboard-header">
+                <div class="scoreboard-title">📊 Challenge Summary</div>
+                <p style="color: var(--text-light);">Review your performance</p>
+            </div>
+
+            <div style="background: var(--background); padding: 1.5rem; border-radius: 15px; margin-bottom: 2rem;">
+                <div style="display: flex; justify-content: space-around; text-align: center;">
+                    <div>
+                        <div style="font-size: 2.5rem; font-weight: 700; color: var(--success);" id="summaryCorrect">0</div>
+                        <div style="color: var(--text-light); font-size: 0.9rem;">Correct</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 2.5rem; font-weight: 700; color: var(--error);" id="summaryIncorrect">0</div>
+                        <div style="color: var(--text-light); font-size: 0.9rem;">Incorrect</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 2.5rem; font-weight: 700; color: var(--primary);" id="summaryAccuracy">0%</div>
+                        <div style="color: var(--text-light); font-size: 0.9rem;">Accuracy</div>
+                    </div>
+                </div>
+            </div>
+
+            <h3 style="margin-bottom: 1rem; color: var(--text-dark);">Word Results:</h3>
+            <div id="summaryResults" style="max-height: 400px; overflow-y: auto;"></div>
+
+            <div style="margin-top: 2rem; padding: 1.5rem; background: var(--background); border-radius: 15px; border-left: 4px solid var(--primary);">
+                <h4 style="margin-bottom: 0.5rem; color: var(--primary);">💡 Practice Tip:</h4>
+                <p style="color: var(--text-dark); line-height: 1.6;">
+                    Words marked ❌ need more practice! Try them again in Learn Mode to improve your pronunciation.
+                </p>
+            </div>
+
+            <div class="button-group" style="margin-top: 2rem;">
+                <button class="btn-success" onclick="retryChallenge()">🔄 Try Again</button>
+                <button class="btn-secondary" onclick="showHome()">🏠 Home</button>
+            </div>
         </div>
     </div>
 
@@ -771,11 +824,41 @@
                 emoji: '🔤',
                 difficulty: 'beginner',
                 words: [
-                    { gurmukhi: 'ੳ', name: 'Oora', meaning: 'Letter Oora', pronunciation: ['oora', 'ura', 'oo ra'], image: '🌙' },
-                    { gurmukhi: 'ਅ', name: 'Aira', meaning: 'Letter Aira', pronunciation: ['aira', 'aera', 'ai ra'], image: '🍎' },
-                    { gurmukhi: 'ੲ', name: 'Iri', meaning: 'Letter Iri', pronunciation: ['iri', 'eeri', 'ee ri'], image: '⭐' },
-                    { gurmukhi: 'ਸ', name: 'Sassa', meaning: 'Letter Sassa', pronunciation: ['sassa', 'sasa', 'sa'], image: '🦁' },
-                    { gurmukhi: 'ਹ', name: 'Haha', meaning: 'Letter Haha', pronunciation: ['haha', 'haa', 'ha'], image: '🏠' }
+                    { gurmukhi: 'ੳ', name: 'Oora', meaning: 'Letter Oora', pronunciation: ['oora', 'ura', 'oo ra'], image: '' },
+                    { gurmukhi: 'ਅ', name: 'Aira', meaning: 'Letter Aira', pronunciation: ['aira', 'aera', 'ai ra'], image: '' },
+                    { gurmukhi: 'ੲ', name: 'Iri', meaning: 'Letter Iri', pronunciation: ['iri', 'eeri', 'ee ri'], image: '' },
+                    { gurmukhi: 'ਸ', name: 'Sassa', meaning: 'Letter Sassa', pronunciation: ['sassa', 'sasa', 'sa'], image: '' },
+                    { gurmukhi: 'ਹ', name: 'Haha', meaning: 'Letter Haha', pronunciation: ['haha', 'haa', 'ha'], image: '' },
+                    { gurmukhi: 'ਕ', name: 'Kakka', meaning: 'Letter Kakka', pronunciation: ['kakka', 'kaka', 'ka'], image: '' },
+                    { gurmukhi: 'ਖ', name: 'Khakha', meaning: 'Letter Khakha', pronunciation: ['khakha', 'kha', 'ka'], image: '' },
+                    { gurmukhi: 'ਗ', name: 'Gagga', meaning: 'Letter Gagga', pronunciation: ['gagga', 'gaga', 'ga'], image: '' },
+                    { gurmukhi: 'ਘ', name: 'Ghagha', meaning: 'Letter Ghagha', pronunciation: ['ghagha', 'gha', 'ga'], image: '' },
+                    { gurmukhi: 'ਙ', name: 'Nganga', meaning: 'Letter Nganga', pronunciation: ['nganga', 'nga', 'nanga'], image: '' },
+                    { gurmukhi: 'ਚ', name: 'Chacha', meaning: 'Letter Chacha', pronunciation: ['chacha', 'cha', 'chaa'], image: '' },
+                    { gurmukhi: 'ਛ', name: 'Chhachha', meaning: 'Letter Chhachha', pronunciation: ['chhachha', 'chha', 'cha'], image: '' },
+                    { gurmukhi: 'ਜ', name: 'Jajja', meaning: 'Letter Jajja', pronunciation: ['jajja', 'jaja', 'ja'], image: '' },
+                    { gurmukhi: 'ਝ', name: 'Jhajha', meaning: 'Letter Jhajha', pronunciation: ['jhajha', 'jha', 'ja'], image: '' },
+                    { gurmukhi: 'ਞ', name: 'Nyanya', meaning: 'Letter Nyanya', pronunciation: ['nyanya', 'nya', 'nanya'], image: '' },
+                    { gurmukhi: 'ਟ', name: 'Tainka', meaning: 'Letter Tainka', pronunciation: ['tainka', 'tain', 'ta'], image: '' },
+                    { gurmukhi: 'ਠ', name: 'Thatha', meaning: 'Letter Thatha', pronunciation: ['thatha', 'tha', 'ta'], image: '' },
+                    { gurmukhi: 'ਡ', name: 'Dadda', meaning: 'Letter Dadda', pronunciation: ['dadda', 'dada', 'da'], image: '' },
+                    { gurmukhi: 'ਢ', name: 'Dhadha', meaning: 'Letter Dhadha', pronunciation: ['dhadha', 'dha', 'da'], image: '' },
+                    { gurmukhi: 'ਣ', name: 'Nanna', meaning: 'Letter Nanna', pronunciation: ['nanna', 'nana', 'na'], image: '' },
+                    { gurmukhi: 'ਤ', name: 'Tatta', meaning: 'Letter Tatta', pronunciation: ['tatta', 'tata', 'ta'], image: '' },
+                    { gurmukhi: 'ਥ', name: 'Thatha', meaning: 'Letter Thatha', pronunciation: ['thatha', 'tha', 'ta'], image: '' },
+                    { gurmukhi: 'ਦ', name: 'Dadda', meaning: 'Letter Dadda', pronunciation: ['dadda', 'dada', 'da'], image: '' },
+                    { gurmukhi: 'ਧ', name: 'Dhadha', meaning: 'Letter Dhadha', pronunciation: ['dhadha', 'dha', 'da'], image: '' },
+                    { gurmukhi: 'ਨ', name: 'Nanna', meaning: 'Letter Nanna', pronunciation: ['nanna', 'nana', 'na'], image: '' },
+                    { gurmukhi: 'ਪ', name: 'Pappa', meaning: 'Letter Pappa', pronunciation: ['pappa', 'papa', 'pa'], image: '' },
+                    { gurmukhi: 'ਫ', name: 'Phaphha', meaning: 'Letter Phaphha', pronunciation: ['phaphha', 'pha', 'pa'], image: '' },
+                    { gurmukhi: 'ਬ', name: 'Babba', meaning: 'Letter Babba', pronunciation: ['babba', 'baba', 'ba'], image: '' },
+                    { gurmukhi: 'ਭ', name: 'Bhabha', meaning: 'Letter Bhabha', pronunciation: ['bhabha', 'bha', 'ba'], image: '' },
+                    { gurmukhi: 'ਮ', name: 'Mamma', meaning: 'Letter Mamma', pronunciation: ['mamma', 'mama', 'ma'], image: '' },
+                    { gurmukhi: 'ਯ', name: 'Yayya', meaning: 'Letter Yayya', pronunciation: ['yayya', 'yaya', 'ya'], image: '' },
+                    { gurmukhi: 'ਰ', name: 'Rara', meaning: 'Letter Rara', pronunciation: ['rara', 'ra', 'raa'], image: '' },
+                    { gurmukhi: 'ਲ', name: 'Lalla', meaning: 'Letter Lalla', pronunciation: ['lalla', 'lala', 'la'], image: '' },
+                    { gurmukhi: 'ਵ', name: 'Vavva', meaning: 'Letter Vavva', pronunciation: ['vavva', 'vava', 'va'], image: '' },
+                    { gurmukhi: 'ੜ', name: 'Rarra', meaning: 'Letter Rarra', pronunciation: ['rarra', 'rara', 'ra'], image: '' }
                 ]
             },
             
@@ -867,6 +950,8 @@
         let challengeTotal = 0;
         let challengeWords = [];
         let usedHint = false;
+        let currentAttempts = 0; // Track attempts per word
+        let challengeResults = []; // Track results for summary
         
         // Parent analytics
         let analytics = {
@@ -946,14 +1031,29 @@
             const word = currentWords[currentWordIndex];
             
             document.getElementById('learnGurmukhi').textContent = word.gurmukhi;
-            document.getElementById('learnImage').textContent = word.image;
             document.getElementById('learnName').textContent = word.name;
             document.getElementById('learnMeaning').textContent = word.meaning;
             document.getElementById('learnCurrentCard').textContent = currentWordIndex + 1;
             document.getElementById('learnTotalCards').textContent = currentWords.length;
-            document.getElementById('learnCategory').textContent = wordPacks[currentCategory].name;
+            
+            // Hide image for alphabet (confusing), show for other categories
+            const imageElement = document.getElementById('learnImage');
+            if (currentCategory === 'alphabet' || !word.image) {
+                imageElement.style.display = 'none';
+            } else {
+                imageElement.style.display = 'flex';
+                imageElement.textContent = word.image;
+            }
             
             hideFeedback('learnFeedback');
+        }
+
+        function changeLearnCategory() {
+            const select = document.getElementById('categorySelect');
+            currentCategory = select.value;
+            currentWords = wordPacks[currentCategory].words;
+            currentWordIndex = 0;
+            updateLearnDisplay();
         }
 
         function learnNext() {
@@ -996,6 +1096,8 @@
             challengeCorrect = 0;
             challengeTotal = 0;
             usedHint = false;
+            currentAttempts = 0;
+            challengeResults = []; // Reset results for new challenge
             
             updateChallengeDisplay();
             showScreen('challengeScreen');
@@ -1017,10 +1119,22 @@
             
             const word = challengeWords[currentWordIndex];
             
-            // Hide word info in challenge mode
+            // Reset attempts for new word
+            currentAttempts = 0;
+            
+            // Always show Gurmukhi in challenge mode
             document.getElementById('challengeGurmukhi').textContent = word.gurmukhi;
-            document.getElementById('challengeGurmukhi').style.display = 'none';
-            document.getElementById('challengeImage').textContent = word.image;
+            document.getElementById('challengeGurmukhi').style.display = 'block';
+            
+            // Hide image for alphabet, show for other categories
+            const imageElement = document.getElementById('challengeImage');
+            if (currentCategory === 'alphabet' || !word.image) {
+                imageElement.style.display = 'none';
+            } else {
+                imageElement.style.display = 'flex';
+                imageElement.textContent = word.image;
+            }
+            
             document.getElementById('challengeHint').style.display = 'none';
             document.getElementById('challengeHint').textContent = `Hint: The word is "${word.name}"`;
             
@@ -1034,7 +1148,7 @@
         }
 
         function showHint() {
-            document.getElementById('challengeGurmukhi').style.display = 'block';
+            // Show the hint text with the transliteration
             document.getElementById('challengeHint').style.display = 'block';
             usedHint = true;
         }
@@ -1055,6 +1169,15 @@
 
         function challengeSkip() {
             challengeTotal++;
+            
+            // Record skip in results
+            challengeResults.push({
+                word: challengeWords[currentWordIndex].name,
+                gurmukhi: challengeWords[currentWordIndex].gurmukhi,
+                correct: false,
+                attempts: currentAttempts,
+                skipped: true
+            });
             
             // Record skip in analytics
             const currentSession = analytics.sessions[analytics.sessions.length - 1];
@@ -1300,6 +1423,14 @@
                     challengeCorrect++;
                     challengeTotal++;
                     
+                    // Record result
+                    challengeResults.push({
+                        word: word.name,
+                        gurmukhi: word.gurmukhi,
+                        correct: true,
+                        attempts: currentAttempts + 1
+                    });
+                    
                     // Record in analytics
                     const currentSession = analytics.sessions[analytics.sessions.length - 1];
                     currentSession.results.push({
@@ -1320,27 +1451,78 @@
                         updateChallengeDisplay();
                     }, 2500);
                 } else {
-                    // Learn mode - just positive feedback
+                    // Learn mode - celebrate and auto-advance
                     analytics.totalCorrect++;
                     analytics.totalAttempts++;
-                }
-                
-            } else if (match.score >= 30) {
-                // Close but not quite
-                const message = goodMessages[Math.floor(Math.random() * goodMessages.length)];
-                showFeedback(feedback, `${message} You said "${match.transcript}". Try: "${word.name}"`, 'incorrect');
-                
-                if (currentSpeakMode === 'challenge') {
-                    analytics.totalAttempts++;
+                    
+                    // Celebrate in learn mode too!
+                    celebrate();
+                    
+                    // Auto-advance after celebration
+                    setTimeout(() => {
+                        if (currentWordIndex < currentWords.length - 1) {
+                            currentWordIndex++;
+                            updateLearnDisplay();
+                        } else {
+                            showFeedback(feedback, '🎊 Great job! You completed all the words!', 'correct');
+                        }
+                    }, 2500);
                 }
                 
             } else {
-                // Needs another try
-                const message = tryAgainMessages[Math.floor(Math.random() * tryAgainMessages.length)];
-                showFeedback(feedback, `${message} The word is "${word.name}"`, 'incorrect');
-                
+                // Incorrect answer
                 if (currentSpeakMode === 'challenge') {
+                    currentAttempts++;
                     analytics.totalAttempts++;
+                    
+                    if (currentAttempts >= 2) {
+                        // Failed after 2 attempts - mark incorrect and move on
+                        challengeTotal++;
+                        
+                        // Record result
+                        challengeResults.push({
+                            word: word.name,
+                            gurmukhi: word.gurmukhi,
+                            correct: false,
+                            attempts: currentAttempts
+                        });
+                        
+                        // Record in analytics
+                        const currentSession = analytics.sessions[analytics.sessions.length - 1];
+                        currentSession.results.push({
+                            word: word.name,
+                            correct: false,
+                            usedHint: usedHint
+                        });
+                        
+                        showFeedback(feedback, `The word was "${word.name}". Moving on...`, 'incorrect');
+                        
+                        // Move to next word
+                        setTimeout(() => {
+                            currentWordIndex++;
+                            updateChallengeDisplay();
+                        }, 2500);
+                    } else {
+                        // First attempt failed - give another try
+                        if (match.score >= 30) {
+                            const message = goodMessages[Math.floor(Math.random() * goodMessages.length)];
+                            showFeedback(feedback, `${message} You said "${match.transcript}". Try: "${word.name}" (Attempt ${currentAttempts}/2)`, 'incorrect');
+                        } else {
+                            const message = tryAgainMessages[Math.floor(Math.random() * tryAgainMessages.length)];
+                            showFeedback(feedback, `${message} The word is "${word.name}" (Attempt ${currentAttempts}/2)`, 'incorrect');
+                        }
+                    }
+                } else {
+                    // Learn mode - unlimited attempts
+                    analytics.totalAttempts++;
+                    
+                    if (match.score >= 30) {
+                        const message = goodMessages[Math.floor(Math.random() * goodMessages.length)];
+                        showFeedback(feedback, `${message} You said "${match.transcript}". Try: "${word.name}"`, 'incorrect');
+                    } else {
+                        const message = tryAgainMessages[Math.floor(Math.random() * tryAgainMessages.length)];
+                        showFeedback(feedback, `${message} The word is "${word.name}"`, 'incorrect');
+                    }
                 }
             }
             
@@ -1391,7 +1573,7 @@
         }
 
         // ==================== SCORING & LEADERBOARD ====================
-        function saveScore() {
+        function saveScoreAndShowSummary() {
             const name = document.getElementById('playerName').value.trim() || 'Anonymous';
             
             const score = {
@@ -1417,10 +1599,56 @@
             // Save
             localStorage.setItem('gurmukhiScores', JSON.stringify(scores));
             
-            // Close modal and show scoreboard
+            // Close modal
             document.getElementById('nameModal').classList.remove('active');
             document.getElementById('playerName').value = '';
-            showScoreboard();
+            
+            // Show summary screen
+            showChallengeSummary();
+        }
+
+        function showChallengeSummary() {
+            // Calculate stats
+            const correct = challengeResults.filter(r => r.correct).length;
+            const incorrect = challengeResults.filter(r => !r.correct).length;
+            const accuracy = challengeTotal > 0 ? Math.round((correct / challengeTotal) * 100) : 0;
+            
+            // Update summary stats
+            document.getElementById('summaryCorrect').textContent = correct;
+            document.getElementById('summaryIncorrect').textContent = incorrect;
+            document.getElementById('summaryAccuracy').textContent = accuracy + '%';
+            
+            // Generate results list
+            const resultsContainer = document.getElementById('summaryResults');
+            resultsContainer.innerHTML = challengeResults.map(result => {
+                const icon = result.correct ? '✅' : '❌';
+                const bgColor = result.correct ? '#E8F5E9' : '#FFEBEE';
+                const borderColor = result.correct ? 'var(--success)' : 'var(--error)';
+                const status = result.skipped ? 'Skipped' : 
+                              result.correct ? 'Correct' : 
+                              `Incorrect (${result.attempts} attempts)`;
+                
+                return `
+                    <div style="background: ${bgColor}; padding: 1rem; margin-bottom: 0.5rem; border-radius: 10px; border-left: 4px solid ${borderColor}; display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <span style="font-size: 1.5rem; margin-right: 0.5rem;">${icon}</span>
+                            <span style="font-family: var(--font-gurmukhi); font-size: 1.5rem; margin-right: 0.5rem;">${result.gurmukhi}</span>
+                            <span style="font-weight: 600; font-size: 1.1rem;">${result.word}</span>
+                        </div>
+                        <div style="color: var(--text-light); font-size: 0.9rem;">
+                            ${status}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            // Show summary screen
+            showScreen('summaryScreen');
+        }
+
+        function retryChallenge() {
+            // Restart the same category challenge
+            startChallenge(currentCategory);
         }
 
         function renderScoreboard() {
