@@ -1186,8 +1186,13 @@
 
         function learnSpeak() {
             if (!recognition) {
-                showFeedback('learnFeedback', 'Speech recognition not available. Please use Chrome or Edge.', 'incorrect');
-                return;
+                // Try to initialize again if it failed
+                initSpeechRecognition();
+                
+                if (!recognition) {
+                    showFeedback('learnFeedback', 'Speech recognition not available. Please use Chrome or Edge browser.', 'incorrect');
+                    return;
+                }
             }
             
             if (isListening) {
@@ -1269,8 +1274,13 @@
 
         function challengeSpeak() {
             if (!recognition) {
-                showFeedback('challengeFeedback', 'Speech recognition not available. Please use Chrome or Edge.', 'incorrect');
-                return;
+                // Try to initialize again if it failed
+                initSpeechRecognition();
+                
+                if (!recognition) {
+                    showFeedback('challengeFeedback', 'Speech recognition not available. Please use Chrome or Edge browser.', 'incorrect');
+                    return;
+                }
             }
             
             if (isListening) {
@@ -1330,64 +1340,94 @@
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             
             if (!SpeechRecognition) {
-                console.error('Speech recognition not supported');
+                console.error('Speech recognition not supported in this browser');
+                console.error('Please use Chrome or Edge browser');
                 return;
             }
 
-            recognition = new SpeechRecognition();
-            recognition.continuous = false;
-            recognition.interimResults = false;
-            recognition.lang = 'en-US';
-            recognition.maxAlternatives = 10; // Get more alternatives for better child matching
+            console.log('Initializing speech recognition...');
+            
+            try {
+                recognition = new SpeechRecognition();
+                recognition.continuous = false;
+                recognition.interimResults = false;
+                recognition.lang = 'en-US';
+                recognition.maxAlternatives = 10; // Get more alternatives for better child matching
 
-            recognition.onstart = () => {
-                isListening = true;
-                const btn = currentSpeakMode === 'learn' ? 'learnSpeakBtn' : 'challengeSpeakBtn';
-                document.getElementById(btn).textContent = '🎤 Listening...';
-                document.getElementById(btn).style.background = 'var(--blue)';
-                
-                const feedback = currentSpeakMode === 'learn' ? 'learnFeedback' : 'challengeFeedback';
-                showFeedback(feedback, '👂 Listening... Speak now!', 'listening');
-            };
+                console.log('Speech recognition initialized successfully');
 
-            recognition.onresult = (event) => {
-                const results = [];
-                for (let i = 0; i < event.results[0].length; i++) {
-                    results.push({
-                        transcript: event.results[0][i].transcript.toLowerCase().trim(),
-                        confidence: event.results[0][i].confidence
-                    });
-                }
-                
-                checkPronunciation(results);
-            };
+                recognition.onstart = () => {
+                    console.log('Speech recognition started');
+                    isListening = true;
+                    const btn = currentSpeakMode === 'learn' ? 'learnSpeakBtn' : 'challengeSpeakBtn';
+                    document.getElementById(btn).textContent = '🎤 Listening...';
+                    document.getElementById(btn).style.background = 'var(--blue)';
+                    
+                    const feedback = currentSpeakMode === 'learn' ? 'learnFeedback' : 'challengeFeedback';
+                    showFeedback(feedback, '👂 Listening... Speak now!', 'listening');
+                };
 
-            recognition.onerror = (event) => {
-                console.error('Speech recognition error:', event.error);
-                stopListening();
-                
-                const feedback = currentSpeakMode === 'learn' ? 'learnFeedback' : 'challengeFeedback';
-                
-                if (event.error === 'no-speech') {
-                    showFeedback(feedback, "I didn't hear anything. Try again!", 'incorrect');
-                } else if (event.error === 'not-allowed') {
-                    showFeedback(feedback, 'Microphone access needed. Please allow in browser settings.', 'incorrect');
-                } else {
-                    showFeedback(feedback, 'Oops! Please try again.', 'incorrect');
-                }
-            };
+                recognition.onresult = (event) => {
+                    const results = [];
+                    for (let i = 0; i < event.results[0].length; i++) {
+                        results.push({
+                            transcript: event.results[0][i].transcript.toLowerCase().trim(),
+                            confidence: event.results[0][i].confidence
+                        });
+                    }
+                    
+                    console.log('Speech recognized:', results[0].transcript);
+                    checkPronunciation(results);
+                };
 
-            recognition.onend = () => {
-                stopListening();
-            };
+                recognition.onerror = (event) => {
+                    console.error('Speech recognition error:', event.error);
+                    stopListening();
+                    
+                    const feedback = currentSpeakMode === 'learn' ? 'learnFeedback' : 'challengeFeedback';
+                    
+                    if (event.error === 'no-speech') {
+                        showFeedback(feedback, "I didn't hear anything. Try again!", 'incorrect');
+                    } else if (event.error === 'not-allowed') {
+                        showFeedback(feedback, '⚠️ Microphone blocked. Please click the microphone icon in your browser address bar and allow access.', 'incorrect');
+                    } else if (event.error === 'aborted') {
+                        // Ignore aborted errors (user stopped)
+                        console.log('Recognition aborted by user');
+                    } else {
+                        showFeedback(feedback, 'Oops! Error: ' + event.error + '. Please try again.', 'incorrect');
+                    }
+                };
+
+                recognition.onend = () => {
+                    console.log('Speech recognition ended');
+                    stopListening();
+                };
+            } catch (error) {
+                console.error('Failed to initialize speech recognition:', error);
+                recognition = null;
+            }
         }
 
         function startRecognition() {
+            if (!recognition) {
+                console.error('Recognition not initialized');
+                return;
+            }
+            
             try {
+                console.log('Starting speech recognition...');
                 recognition.start();
             } catch (error) {
                 console.error('Error starting recognition:', error);
-                stopListening();
+                
+                // If already started, just ignore
+                if (error.name === 'InvalidStateError') {
+                    console.log('Recognition already in progress');
+                } else {
+                    stopListening();
+                    const feedback = currentSpeakMode === 'learn' ? 'learnFeedback' : 'challengeFeedback';
+                    showFeedback(feedback, 'Could not start microphone. Please refresh the page and try again.', 'incorrect');
+                }
             }
         }
 
