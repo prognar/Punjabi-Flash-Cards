@@ -1,0 +1,1540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Learn Punjabi vocabulary through fun games and challenges">
+    <title>Punjabi Learning Adventure 🌟</title>
+    <style>
+        /* ==================== CSS RESET & BASE ==================== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            /* Color Palette - Kid-friendly vibrant colors */
+            --primary: #FF6B35;
+            --secondary: #F7931E;
+            --success: #4CAF50;
+            --warning: #FFC107;
+            --error: #F44336;
+            --purple: #9C27B0;
+            --blue: #2196F3;
+            --pink: #E91E63;
+            --background: #FFF8F0;
+            --card-bg: #FFFFFF;
+            --text-dark: #2C3E50;
+            --text-light: #7F8C8D;
+            --shadow: rgba(0, 0, 0, 0.1);
+            
+            /* Typography */
+            --font-main: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            --font-gurmukhi: 'Noto Sans Gurmukhi', 'Raavi', 'AnmolUniBani', sans-serif;
+        }
+
+        body {
+            font-family: var(--font-main);
+            background: linear-gradient(135deg, #FFF8F0 0%, #FFE8D6 100%);
+            color: var(--text-dark);
+            min-height: 100vh;
+            padding: 1rem;
+        }
+
+        /* ==================== HEADER ==================== */
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+            animation: fadeInDown 0.6s ease-out;
+        }
+
+        h1 {
+            font-size: clamp(1.5rem, 5vw, 2.5rem);
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            font-size: clamp(0.9rem, 3vw, 1.1rem);
+            color: var(--text-light);
+        }
+
+        /* ==================== CONTAINER ==================== */
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        /* ==================== SCREENS (VIEWS) ==================== */
+        .screen {
+            display: none;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        /* ==================== HOME SCREEN (MODE SELECTOR) ==================== */
+        .mode-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .mode-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px var(--shadow);
+            border: 3px solid transparent;
+        }
+
+        .mode-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            border-color: var(--primary);
+        }
+
+        .mode-card.learn { border-top: 5px solid var(--blue); }
+        .mode-card.challenge { border-top: 5px solid var(--purple); }
+        .mode-card.scores { border-top: 5px solid var(--success); }
+        .mode-card.parent { border-top: 5px solid var(--pink); }
+
+        .mode-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .mode-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-dark);
+        }
+
+        .mode-desc {
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        /* ==================== CATEGORY SELECTOR ==================== */
+        .category-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .category-btn {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            padding: 1.5rem 1rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px var(--shadow);
+            text-align: center;
+        }
+
+        .category-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .category-btn .emoji {
+            display: block;
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        /* ==================== GAME CARD ==================== */
+        .game-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 40px var(--shadow);
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .score-display {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background: var(--background);
+            border-radius: 15px;
+        }
+
+        .score-item {
+            text-align: center;
+        }
+
+        .score-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .score-label {
+            font-size: 0.8rem;
+            color: var(--text-light);
+            text-transform: uppercase;
+        }
+
+        .word-display {
+            margin: 2rem 0;
+        }
+
+        .gurmukhi-word {
+            font-family: var(--font-gurmukhi);
+            font-size: clamp(4rem, 15vw, 8rem);
+            color: var(--primary);
+            margin: 1rem 0;
+            line-height: 1;
+        }
+
+        .word-image {
+            width: 100%;
+            max-width: 400px;
+            height: 300px;
+            margin: 1rem auto;
+            background: var(--background);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 8rem;
+            border: 4px solid var(--secondary);
+        }
+
+        .hint-text {
+            font-size: 1.2rem;
+            color: var(--text-light);
+            font-style: italic;
+            margin: 1rem 0;
+        }
+
+        /* ==================== BUTTONS ==================== */
+        button {
+            padding: 1rem 2rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px var(--shadow);
+            font-family: var(--font-main);
+        }
+
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            font-size: 1.3rem;
+            padding: 1.5rem 2rem;
+            width: 100%;
+            margin: 0.5rem 0;
+        }
+
+        .btn-secondary {
+            background: var(--text-light);
+            color: white;
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-back {
+            background: var(--text-light);
+            color: white;
+            margin-top: 1rem;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .button-group button {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        /* ==================== CELEBRATION OVERLAY ==================== */
+        .celebration {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: var(--primary);
+            animation: confettiFall 3s ease-out forwards;
+        }
+
+        @keyframes confettiFall {
+            0% {
+                transform: translateY(-100vh) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+
+        .success-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: white;
+            padding: 3rem;
+            border-radius: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            z-index: 1001;
+            animation: popIn 0.5s ease-out forwards;
+        }
+
+        @keyframes popIn {
+            0% { transform: translate(-50%, -50%) scale(0); }
+            50% { transform: translate(-50%, -50%) scale(1.1); }
+            100% { transform: translate(-50%, -50%) scale(1); }
+        }
+
+        .success-message.hide {
+            animation: popOut 0.3s ease-out forwards;
+        }
+
+        @keyframes popOut {
+            to {
+                transform: translate(-50%, -50%) scale(0);
+                opacity: 0;
+            }
+        }
+
+        .success-message .emoji {
+            font-size: 5rem;
+            margin-bottom: 1rem;
+        }
+
+        .success-message .message {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--success);
+        }
+
+        /* ==================== SCOREBOARD ==================== */
+        .scoreboard {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 40px var(--shadow);
+        }
+
+        .scoreboard-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .scoreboard-title {
+            font-size: 2rem;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .score-entry {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            background: var(--background);
+            border-radius: 10px;
+            border-left: 4px solid var(--primary);
+        }
+
+        .score-entry.gold { border-left-color: #FFD700; }
+        .score-entry.silver { border-left-color: #C0C0C0; }
+        .score-entry.bronze { border-left-color: #CD7F32; }
+
+        .score-rank {
+            font-size: 1.5rem;
+            font-weight: 700;
+            min-width: 40px;
+        }
+
+        .score-name {
+            flex: 1;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .score-points {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        /* ==================== NAME ENTRY MODAL ==================== */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 20px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .modal-content h2 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+
+        .modal-content input {
+            width: 100%;
+            padding: 1rem;
+            font-size: 1.2rem;
+            border: 2px solid var(--primary);
+            border-radius: 10px;
+            margin: 1rem 0;
+            text-align: center;
+        }
+
+        /* ==================== PARENT DASHBOARD ==================== */
+        .stat-card {
+            background: var(--background);
+            padding: 1.5rem;
+            border-radius: 15px;
+            margin-bottom: 1rem;
+            border-left: 4px solid var(--blue);
+        }
+
+        .stat-title {
+            font-size: 0.9rem;
+            color: var(--text-light);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .progress-bar {
+            background: #E0E0E0;
+            height: 20px;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 0.5rem 0;
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, var(--success), var(--primary));
+            height: 100%;
+            transition: width 0.5s ease;
+        }
+
+        /* ==================== ANIMATIONS ==================== */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        /* ==================== FEEDBACK ==================== */
+        .feedback {
+            padding: 1rem;
+            border-radius: 12px;
+            margin: 1rem 0;
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-align: center;
+            display: none;
+        }
+
+        .feedback.show {
+            display: block;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .feedback.correct {
+            background: var(--success);
+            color: white;
+        }
+
+        .feedback.incorrect {
+            background: var(--warning);
+            color: var(--text-dark);
+        }
+
+        .feedback.listening {
+            background: var(--blue);
+            color: white;
+            animation: pulse 1.5s infinite;
+        }
+
+        /* ==================== RESPONSIVE ==================== */
+        @media (max-width: 600px) {
+            .mode-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .category-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .score-display {
+                flex-direction: column;
+                gap: 1rem;
+            }
+        }
+
+        /* ==================== ACCESSIBILITY ==================== */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border-width: 0;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🌟 Punjabi Learning Adventure</h1>
+        <p class="subtitle">Learn. Play. Master!</p>
+    </header>
+
+    <div class="container">
+        <!-- ==================== HOME SCREEN ==================== -->
+        <div id="homeScreen" class="screen active">
+            <div class="mode-grid">
+                <div class="mode-card learn" onclick="showLearnMode()">
+                    <div class="mode-icon">📚</div>
+                    <div class="mode-title">Learn Mode</div>
+                    <div class="mode-desc">Practice letters and words at your own pace</div>
+                </div>
+
+                <div class="mode-card challenge" onclick="showChallengeSetup()">
+                    <div class="mode-icon">🎮</div>
+                    <div class="mode-title">Challenge Mode</div>
+                    <div class="mode-desc">Test your skills and earn stars!</div>
+                </div>
+
+                <div class="mode-card scores" onclick="showScoreboard()">
+                    <div class="mode-icon">🏆</div>
+                    <div class="mode-title">High Scores</div>
+                    <div class="mode-desc">See who's the champion!</div>
+                </div>
+
+                <div class="mode-card parent" onclick="showParentDashboard()">
+                    <div class="mode-icon">📊</div>
+                    <div class="mode-title">Parent View</div>
+                    <div class="mode-desc">Track progress and performance</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== CHALLENGE SETUP SCREEN ==================== -->
+        <div id="challengeSetupScreen" class="screen">
+            <div class="game-card">
+                <h2 style="color: var(--purple); margin-bottom: 2rem;">🎮 Choose Your Challenge</h2>
+                
+                <div class="category-grid" id="categorySelector"></div>
+
+                <button class="btn-back" onclick="showHome()">← Back to Home</button>
+            </div>
+        </div>
+
+        <!-- ==================== LEARN MODE SCREEN ==================== -->
+        <div id="learnScreen" class="screen">
+            <div class="game-card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <span style="color: var(--text-light);">Card <span id="learnCurrentCard">1</span> of <span id="learnTotalCards">35</span></span>
+                    <span style="color: var(--text-light);">Category: <span id="learnCategory">Alphabet</span></span>
+                </div>
+
+                <div class="word-display">
+                    <div class="gurmukhi-word" id="learnGurmukhi">ੳ</div>
+                    <div class="word-image" id="learnImage">🌙</div>
+                    <div style="font-size: 2rem; font-weight: 600; margin: 1rem 0;" id="learnName">Oora</div>
+                    <div style="font-size: 1.2rem; color: var(--text-light);" id="learnMeaning">Pronunciation: OO-ra</div>
+                </div>
+
+                <div class="feedback" id="learnFeedback"></div>
+
+                <button class="btn-primary" id="learnSpeakBtn" onclick="learnSpeak()">🎤 Practice Speaking</button>
+
+                <div class="button-group" style="margin-top: 1rem;">
+                    <button class="btn-secondary" onclick="learnPrevious()">← Previous</button>
+                    <button class="btn-secondary" onclick="learnNext()">Next →</button>
+                </div>
+
+                <button class="btn-back" onclick="showHome()">← Back to Home</button>
+            </div>
+        </div>
+
+        <!-- ==================== CHALLENGE MODE SCREEN ==================== -->
+        <div id="challengeScreen" class="screen">
+            <div class="game-card">
+                <div class="score-display">
+                    <div class="score-item">
+                        <div class="score-value" id="challengeScore">0</div>
+                        <div class="score-label">Score</div>
+                    </div>
+                    <div class="score-item">
+                        <div class="score-value" id="challengeCorrect">0</div>
+                        <div class="score-label">✓ Correct</div>
+                    </div>
+                    <div class="score-item">
+                        <div class="score-value" id="challengeTotal">0</div>
+                        <div class="score-label">Total</div>
+                    </div>
+                </div>
+
+                <div class="word-display">
+                    <div class="gurmukhi-word" id="challengeGurmukhi" style="display: none;">ੳ</div>
+                    <div class="word-image" id="challengeImage">🌙</div>
+                    <div class="hint-text" id="challengeHint" style="display: none;">Hint: It starts with O...</div>
+                </div>
+
+                <div class="feedback" id="challengeFeedback"></div>
+
+                <button class="btn-primary" id="challengeSpeakBtn" onclick="challengeSpeak()">🎤 Say the Word!</button>
+
+                <div class="button-group" style="margin-top: 1rem;">
+                    <button class="btn-secondary" onclick="showHint()">💡 Show Hint</button>
+                    <button class="btn-secondary" onclick="challengeSkip()">⏭️ Skip</button>
+                </div>
+
+                <button class="btn-back" onclick="endChallenge()">End Challenge</button>
+            </div>
+        </div>
+
+        <!-- ==================== SCOREBOARD SCREEN ==================== -->
+        <div id="scoreboardScreen" class="screen">
+            <div class="scoreboard">
+                <div class="scoreboard-header">
+                    <div class="scoreboard-title">🏆 High Scores</div>
+                    <p style="color: var(--text-light);">Top Champions</p>
+                </div>
+
+                <div id="scoresList"></div>
+
+                <button class="btn-secondary" onclick="clearScores()" style="margin-top: 1rem;">Clear All Scores</button>
+                <button class="btn-back" onclick="showHome()">← Back to Home</button>
+            </div>
+        </div>
+
+        <!-- ==================== PARENT DASHBOARD SCREEN ==================== -->
+        <div id="parentScreen" class="screen">
+            <div class="scoreboard">
+                <div class="scoreboard-header">
+                    <div class="scoreboard-title">📊 Learning Progress</div>
+                    <p style="color: var(--text-light);">Parent Dashboard</p>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-title">Total Practice Sessions</div>
+                    <div class="stat-value" id="totalSessions">0</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-title">Overall Accuracy</div>
+                    <div class="stat-value" id="overallAccuracy">0%</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="accuracyBar" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-title">Words Mastered</div>
+                    <div class="stat-value" id="wordsMastered">0</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-title">Favorite Category</div>
+                    <div class="stat-value" id="favoriteCategory" style="font-size: 1.5rem;">-</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-title">Recent Performance (Last 10)</div>
+                    <div id="recentPerformance"></div>
+                </div>
+
+                <button class="btn-back" onclick="showHome()">← Back to Home</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== SUCCESS CELEBRATION ==================== -->
+    <div id="celebration" class="celebration"></div>
+    <div id="successMessage" class="success-message" style="display: none;">
+        <div class="emoji">🎉</div>
+        <div class="message">Amazing!</div>
+    </div>
+
+    <!-- ==================== NAME ENTRY MODAL ==================== -->
+    <div id="nameModal" class="modal">
+        <div class="modal-content">
+            <h2>🌟 Great Job!</h2>
+            <p>You scored <span id="finalScore">0</span> points!</p>
+            <p style="margin-top: 1rem;">Enter your name:</p>
+            <input type="text" id="playerName" placeholder="Your Name" maxlength="20">
+            <button class="btn-success" onclick="saveScore()">Save Score</button>
+        </div>
+    </div>
+
+    <script>
+        // ==================== DATA STRUCTURES ====================
+        
+        // Complete word pack system - easily expandable
+        const wordPacks = {
+            alphabet: {
+                name: 'Alphabet',
+                emoji: '🔤',
+                difficulty: 'beginner',
+                words: [
+                    { gurmukhi: 'ੳ', name: 'Oora', meaning: 'Letter Oora', pronunciation: ['oora', 'ura', 'oo ra'], image: '🌙' },
+                    { gurmukhi: 'ਅ', name: 'Aira', meaning: 'Letter Aira', pronunciation: ['aira', 'aera', 'ai ra'], image: '🍎' },
+                    { gurmukhi: 'ੲ', name: 'Iri', meaning: 'Letter Iri', pronunciation: ['iri', 'eeri', 'ee ri'], image: '⭐' },
+                    { gurmukhi: 'ਸ', name: 'Sassa', meaning: 'Letter Sassa', pronunciation: ['sassa', 'sasa', 'sa'], image: '🦁' },
+                    { gurmukhi: 'ਹ', name: 'Haha', meaning: 'Letter Haha', pronunciation: ['haha', 'haa', 'ha'], image: '🏠' }
+                ]
+            },
+            
+            animals: {
+                name: 'Animals',
+                emoji: '🐾',
+                difficulty: 'beginner',
+                words: [
+                    { gurmukhi: 'ਬਿੱਲੀ', name: 'Billi', meaning: 'Cat', pronunciation: ['billi', 'billi', 'billy', 'bili'], image: '🐱' },
+                    { gurmukhi: 'ਕੁੱਤਾ', name: 'Kutta', meaning: 'Dog', pronunciation: ['kutta', 'kuta', 'koota'], image: '🐕' },
+                    { gurmukhi: 'ਘੋੜਾ', name: 'Ghora', meaning: 'Horse', pronunciation: ['ghora', 'gora', 'ghoda'], image: '🐴' },
+                    { gurmukhi: 'ਹਾਥੀ', name: 'Hathi', meaning: 'Elephant', pronunciation: ['hathi', 'haathi', 'hati'], image: '🐘' },
+                    { gurmukhi: 'ਸ਼ੇਰ', name: 'Sher', meaning: 'Lion', pronunciation: ['sher', 'shair', 'share'], image: '🦁' },
+                    { gurmukhi: 'ਚੂਹਾ', name: 'Chuha', meaning: 'Mouse', pronunciation: ['chuha', 'chooa', 'chua'], image: '🐭' },
+                    { gurmukhi: 'ਪੰਛੀ', name: 'Panchi', meaning: 'Bird', pronunciation: ['panchi', 'panchee', 'paanchi'], image: '🐦' },
+                    { gurmukhi: 'ਮੱਛੀ', name: 'Machhi', meaning: 'Fish', pronunciation: ['machhi', 'machi', 'machhee'], image: '🐟' }
+                ]
+            },
+            
+            colors: {
+                name: 'Colors',
+                emoji: '🎨',
+                difficulty: 'beginner',
+                words: [
+                    { gurmukhi: 'ਲਾਲ', name: 'Laal', meaning: 'Red', pronunciation: ['laal', 'lal', 'lall'], image: '🔴' },
+                    { gurmukhi: 'ਨੀਲਾ', name: 'Neela', meaning: 'Blue', pronunciation: ['neela', 'nila', 'neelaa'], image: '🔵' },
+                    { gurmukhi: 'ਪੀਲਾ', name: 'Peela', meaning: 'Yellow', pronunciation: ['peela', 'pila', 'peelaa'], image: '🟡' },
+                    { gurmukhi: 'ਹਰਾ', name: 'Hara', meaning: 'Green', pronunciation: ['hara', 'haraa', 'haara'], image: '🟢' },
+                    { gurmukhi: 'ਕਾਲਾ', name: 'Kala', meaning: 'Black', pronunciation: ['kala', 'kalaa', 'kaala'], image: '⚫' },
+                    { gurmukhi: 'ਚਿੱਟਾ', name: 'Chitta', meaning: 'White', pronunciation: ['chitta', 'chita', 'chhitta'], image: '⚪' }
+                ]
+            },
+            
+            numbers: {
+                name: 'Numbers',
+                emoji: '🔢',
+                difficulty: 'intermediate',
+                words: [
+                    { gurmukhi: 'ਇੱਕ', name: 'Ikk', meaning: 'One', pronunciation: ['ikk', 'ik', 'ek'], image: '1️⃣' },
+                    { gurmukhi: 'ਦੋ', name: 'Do', meaning: 'Two', pronunciation: ['do', 'doh', 'doe'], image: '2️⃣' },
+                    { gurmukhi: 'ਤਿੰਨ', name: 'Tinn', meaning: 'Three', pronunciation: ['tinn', 'tin', 'teen'], image: '3️⃣' },
+                    { gurmukhi: 'ਚਾਰ', name: 'Char', meaning: 'Four', pronunciation: ['char', 'chaar', 'chhar'], image: '4️⃣' },
+                    { gurmukhi: 'ਪੰਜ', name: 'Panj', meaning: 'Five', pronunciation: ['panj', 'panch', 'paanj'], image: '5️⃣' }
+                ]
+            },
+            
+            family: {
+                name: 'Family',
+                emoji: '👨‍👩‍👧‍👦',
+                difficulty: 'beginner',
+                words: [
+                    { gurmukhi: 'ਮਾਂ', name: 'Maa', meaning: 'Mother', pronunciation: ['maa', 'ma', 'maan'], image: '👩' },
+                    { gurmukhi: 'ਪਿਤਾ', name: 'Pita', meaning: 'Father', pronunciation: ['pita', 'pitaa', 'papa'], image: '👨' },
+                    { gurmukhi: 'ਭਰਾ', name: 'Bhra', meaning: 'Brother', pronunciation: ['bhra', 'bhraa', 'bhara'], image: '👦' },
+                    { gurmukhi: 'ਭੈਣ', name: 'Bhain', meaning: 'Sister', pronunciation: ['bhain', 'bhen', 'bhaan'], image: '👧' },
+                    { gurmukhi: 'ਦਾਦਾ', name: 'Dada', meaning: 'Grandfather', pronunciation: ['dada', 'daadaa', 'dadaji'], image: '👴' },
+                    { gurmukhi: 'ਦਾਦੀ', name: 'Dadi', meaning: 'Grandmother', pronunciation: ['dadi', 'daadee', 'dadiji'], image: '👵' }
+                ]
+            },
+            
+            objects: {
+                name: 'Common Objects',
+                emoji: '🎈',
+                difficulty: 'intermediate',
+                words: [
+                    { gurmukhi: 'ਗੇਂਦ', name: 'Gend', meaning: 'Ball', pronunciation: ['gend', 'gaind', 'gind'], image: '⚽' },
+                    { gurmukhi: 'ਕਿਤਾਬ', name: 'Kitab', meaning: 'Book', pronunciation: ['kitab', 'kitaab', 'ketab'], image: '📚' },
+                    { gurmukhi: 'ਪਾਣੀ', name: 'Pani', meaning: 'Water', pronunciation: ['pani', 'paani', 'paanee'], image: '💧' },
+                    { gurmukhi: 'ਖਾਣਾ', name: 'Khana', meaning: 'Food', pronunciation: ['khana', 'khaana', 'kaana'], image: '🍽️' },
+                    { gurmukhi: 'ਘਰ', name: 'Ghar', meaning: 'House', pronunciation: ['ghar', 'gharr', 'ghur'], image: '🏠' },
+                    { gurmukhi: 'ਕਾਰ', name: 'Car', meaning: 'Car', pronunciation: ['car', 'kaar', 'gadi'], image: '🚗' }
+                ]
+            }
+        };
+
+        // ==================== STATE MANAGEMENT ====================
+        let currentMode = 'home';
+        let currentCategory = null;
+        let currentWordIndex = 0;
+        let currentWords = [];
+        
+        // Speech recognition
+        let recognition = null;
+        let isListening = false;
+        
+        // Challenge mode state
+        let challengeScore = 0;
+        let challengeCorrect = 0;
+        let challengeTotal = 0;
+        let challengeWords = [];
+        let usedHint = false;
+        
+        // Parent analytics
+        let analytics = {
+            sessions: [],
+            totalCorrect: 0,
+            totalAttempts: 0,
+            categoryStats: {}
+        };
+
+        // ==================== INITIALIZATION ====================
+        function init() {
+            initSpeechRecognition();
+            loadAnalytics();
+            renderCategorySelector();
+            
+            // Check for file:// protocol warning
+            if (window.location.protocol === 'file:') {
+                console.warn('Running from file://. For best results, use a web server.');
+            }
+        }
+
+        // ==================== NAVIGATION ====================
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        function showHome() {
+            currentMode = 'home';
+            showScreen('homeScreen');
+        }
+
+        function showLearnMode() {
+            currentMode = 'learn';
+            currentCategory = 'alphabet';
+            currentWords = wordPacks.alphabet.words;
+            currentWordIndex = 0;
+            updateLearnDisplay();
+            showScreen('learnScreen');
+        }
+
+        function showChallengeSetup() {
+            showScreen('challengeSetupScreen');
+        }
+
+        function showScoreboard() {
+            renderScoreboard();
+            showScreen('scoreboardScreen');
+        }
+
+        function showParentDashboard() {
+            updateParentDashboard();
+            showScreen('parentScreen');
+        }
+
+        // ==================== CATEGORY SELECTOR ====================
+        function renderCategorySelector() {
+            const container = document.getElementById('categorySelector');
+            container.innerHTML = '';
+            
+            Object.entries(wordPacks).forEach(([key, pack]) => {
+                const btn = document.createElement('button');
+                btn.className = 'category-btn';
+                btn.innerHTML = `
+                    <span class="emoji">${pack.emoji}</span>
+                    ${pack.name}
+                `;
+                btn.onclick = () => startChallenge(key);
+                container.appendChild(btn);
+            });
+        }
+
+        // ==================== LEARN MODE ====================
+        function updateLearnDisplay() {
+            const word = currentWords[currentWordIndex];
+            
+            document.getElementById('learnGurmukhi').textContent = word.gurmukhi;
+            document.getElementById('learnImage').textContent = word.image;
+            document.getElementById('learnName').textContent = word.name;
+            document.getElementById('learnMeaning').textContent = word.meaning;
+            document.getElementById('learnCurrentCard').textContent = currentWordIndex + 1;
+            document.getElementById('learnTotalCards').textContent = currentWords.length;
+            document.getElementById('learnCategory').textContent = wordPacks[currentCategory].name;
+            
+            hideFeedback('learnFeedback');
+        }
+
+        function learnNext() {
+            if (currentWordIndex < currentWords.length - 1) {
+                currentWordIndex++;
+                updateLearnDisplay();
+            }
+        }
+
+        function learnPrevious() {
+            if (currentWordIndex > 0) {
+                currentWordIndex--;
+                updateLearnDisplay();
+            }
+        }
+
+        function learnSpeak() {
+            if (!recognition) {
+                showFeedback('learnFeedback', 'Speech recognition not available. Please use Chrome or Edge.', 'incorrect');
+                return;
+            }
+            
+            if (isListening) {
+                recognition.stop();
+            } else {
+                currentSpeakMode = 'learn';
+                startRecognition();
+            }
+        }
+
+        // ==================== CHALLENGE MODE ====================
+        function startChallenge(category) {
+            currentMode = 'challenge';
+            currentCategory = category;
+            
+            // Shuffle words for variety
+            challengeWords = [...wordPacks[category].words].sort(() => Math.random() - 0.5);
+            currentWordIndex = 0;
+            challengeScore = 0;
+            challengeCorrect = 0;
+            challengeTotal = 0;
+            usedHint = false;
+            
+            updateChallengeDisplay();
+            showScreen('challengeScreen');
+            
+            // Start a new session for analytics
+            analytics.sessions.push({
+                category: category,
+                timestamp: new Date().toISOString(),
+                results: []
+            });
+        }
+
+        function updateChallengeDisplay() {
+            if (currentWordIndex >= challengeWords.length) {
+                // Challenge complete!
+                endChallengeWithScore();
+                return;
+            }
+            
+            const word = challengeWords[currentWordIndex];
+            
+            // Hide word info in challenge mode
+            document.getElementById('challengeGurmukhi').textContent = word.gurmukhi;
+            document.getElementById('challengeGurmukhi').style.display = 'none';
+            document.getElementById('challengeImage').textContent = word.image;
+            document.getElementById('challengeHint').style.display = 'none';
+            document.getElementById('challengeHint').textContent = `Hint: The word is "${word.name}"`;
+            
+            // Update scores
+            document.getElementById('challengeScore').textContent = challengeScore;
+            document.getElementById('challengeCorrect').textContent = challengeCorrect;
+            document.getElementById('challengeTotal').textContent = challengeTotal;
+            
+            usedHint = false;
+            hideFeedback('challengeFeedback');
+        }
+
+        function showHint() {
+            document.getElementById('challengeGurmukhi').style.display = 'block';
+            document.getElementById('challengeHint').style.display = 'block';
+            usedHint = true;
+        }
+
+        function challengeSpeak() {
+            if (!recognition) {
+                showFeedback('challengeFeedback', 'Speech recognition not available. Please use Chrome or Edge.', 'incorrect');
+                return;
+            }
+            
+            if (isListening) {
+                recognition.stop();
+            } else {
+                currentSpeakMode = 'challenge';
+                startRecognition();
+            }
+        }
+
+        function challengeSkip() {
+            challengeTotal++;
+            
+            // Record skip in analytics
+            const currentSession = analytics.sessions[analytics.sessions.length - 1];
+            currentSession.results.push({
+                word: challengeWords[currentWordIndex].name,
+                correct: false,
+                skipped: true
+            });
+            
+            currentWordIndex++;
+            updateChallengeDisplay();
+        }
+
+        function endChallenge() {
+            if (confirm('Are you sure you want to end this challenge?')) {
+                saveAnalytics();
+                showHome();
+            }
+        }
+
+        function endChallengeWithScore() {
+            saveAnalytics();
+            
+            // Calculate final score
+            const accuracy = challengeTotal > 0 ? Math.round((challengeCorrect / challengeTotal) * 100) : 0;
+            
+            // Show score entry modal
+            document.getElementById('finalScore').textContent = challengeScore;
+            document.getElementById('nameModal').classList.add('active');
+        }
+
+        // ==================== SPEECH RECOGNITION ====================
+        let currentSpeakMode = 'learn'; // 'learn' or 'challenge'
+
+        function initSpeechRecognition() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            
+            if (!SpeechRecognition) {
+                console.error('Speech recognition not supported');
+                return;
+            }
+
+            recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            recognition.lang = 'en-US';
+            recognition.maxAlternatives = 10; // Get more alternatives for better child matching
+
+            recognition.onstart = () => {
+                isListening = true;
+                const btn = currentSpeakMode === 'learn' ? 'learnSpeakBtn' : 'challengeSpeakBtn';
+                document.getElementById(btn).textContent = '🎤 Listening...';
+                document.getElementById(btn).style.background = 'var(--blue)';
+                
+                const feedback = currentSpeakMode === 'learn' ? 'learnFeedback' : 'challengeFeedback';
+                showFeedback(feedback, '👂 Listening... Speak now!', 'listening');
+            };
+
+            recognition.onresult = (event) => {
+                const results = [];
+                for (let i = 0; i < event.results[0].length; i++) {
+                    results.push({
+                        transcript: event.results[0][i].transcript.toLowerCase().trim(),
+                        confidence: event.results[0][i].confidence
+                    });
+                }
+                
+                checkPronunciation(results);
+            };
+
+            recognition.onerror = (event) => {
+                console.error('Speech recognition error:', event.error);
+                stopListening();
+                
+                const feedback = currentSpeakMode === 'learn' ? 'learnFeedback' : 'challengeFeedback';
+                
+                if (event.error === 'no-speech') {
+                    showFeedback(feedback, "I didn't hear anything. Try again!", 'incorrect');
+                } else if (event.error === 'not-allowed') {
+                    showFeedback(feedback, 'Microphone access needed. Please allow in browser settings.', 'incorrect');
+                } else {
+                    showFeedback(feedback, 'Oops! Please try again.', 'incorrect');
+                }
+            };
+
+            recognition.onend = () => {
+                stopListening();
+            };
+        }
+
+        function startRecognition() {
+            try {
+                recognition.start();
+            } catch (error) {
+                console.error('Error starting recognition:', error);
+                stopListening();
+            }
+        }
+
+        function stopListening() {
+            isListening = false;
+            const btn = currentSpeakMode === 'learn' ? 'learnSpeakBtn' : 'challengeSpeakBtn';
+            const btnText = currentSpeakMode === 'learn' ? '🎤 Practice Speaking' : '🎤 Say the Word!';
+            document.getElementById(btn).textContent = btnText;
+            document.getElementById(btn).style.background = 'var(--primary)';
+        }
+
+        // ==================== CHILD-FRIENDLY PRONUNCIATION MATCHING ====================
+        function checkPronunciation(results) {
+            const words = currentSpeakMode === 'learn' ? currentWords : challengeWords;
+            const word = words[currentWordIndex];
+            const expectedPronunciations = word.pronunciation;
+            
+            let bestMatch = { score: 0, transcript: '', isCorrect: false };
+            
+            // Check each result against all acceptable pronunciations
+            results.forEach(result => {
+                const transcript = result.transcript;
+                
+                console.log('Heard:', transcript, 'Expected:', expectedPronunciations);
+                
+                expectedPronunciations.forEach(expected => {
+                    // Very lenient matching for children
+                    const score = calculateChildFriendlySimilarity(transcript, expected);
+                    
+                    if (score > bestMatch.score) {
+                        bestMatch = {
+                            score: score,
+                            transcript: transcript,
+                            isCorrect: score >= 40 // Very lenient threshold
+                        };
+                    }
+                });
+            });
+            
+            console.log('Best match:', bestMatch);
+            providePronunciationFeedback(bestMatch, word);
+        }
+
+        function calculateChildFriendlySimilarity(heard, expected) {
+            heard = heard.toLowerCase().trim();
+            expected = expected.toLowerCase().trim();
+            
+            // Exact match - perfect!
+            if (heard === expected) return 100;
+            
+            // Contains match - very good!
+            if (heard.includes(expected) || expected.includes(heard)) {
+                return 90;
+            }
+            
+            // Check if any word in the phrase matches
+            const heardWords = heard.split(' ');
+            const expectedWords = expected.split(' ');
+            
+            for (let hw of heardWords) {
+                for (let ew of expectedWords) {
+                    if (hw === ew) return 85;
+                    if (hw.includes(ew) || ew.includes(hw)) return 80;
+                }
+            }
+            
+            // Starts with same sound - good attempt!
+            if (heard[0] === expected[0]) {
+                const similarity = levenshteinSimilarity(heard, expected);
+                return similarity * 1.5; // Boost score significantly
+            }
+            
+            // General fuzzy matching with generous scoring
+            const similarity = levenshteinSimilarity(heard, expected);
+            return similarity * 1.4; // Extra generous for kids
+        }
+
+        function levenshteinSimilarity(str1, str2) {
+            const distance = levenshteinDistance(str1, str2);
+            const maxLength = Math.max(str1.length, str2.length);
+            if (maxLength === 0) return 100;
+            return ((maxLength - distance) / maxLength) * 100;
+        }
+
+        function levenshteinDistance(str1, str2) {
+            const matrix = [];
+            
+            for (let i = 0; i <= str2.length; i++) {
+                matrix[i] = [i];
+            }
+            
+            for (let j = 0; j <= str1.length; j++) {
+                matrix[0][j] = j;
+            }
+            
+            for (let i = 1; i <= str2.length; i++) {
+                for (let j = 1; j <= str1.length; j++) {
+                    if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
+                        matrix[i][j] = matrix[i - 1][j - 1];
+                    } else {
+                        matrix[i][j] = Math.min(
+                            matrix[i - 1][j - 1] + 1,
+                            matrix[i][j - 1] + 1,
+                            matrix[i - 1][j] + 1
+                        );
+                    }
+                }
+            }
+            
+            return matrix[str2.length][str1.length];
+        }
+
+        function providePronunciationFeedback(match, word) {
+            const feedback = currentSpeakMode === 'learn' ? 'learnFeedback' : 'challengeFeedback';
+            
+            // Encouraging messages for children
+            const greatMessages = [
+                '🌟 Amazing job!',
+                '🎉 Perfect!',
+                '⭐ You got it!',
+                '🎊 Excellent!',
+                '💫 Wonderful!'
+            ];
+            
+            const goodMessages = [
+                '👍 Good try!',
+                '😊 Nice work!',
+                '🌈 Great effort!',
+                '💪 Keep going!'
+            ];
+            
+            const tryAgainMessages = [
+                '🎯 Try again!',
+                '💚 You can do it!',
+                '🌟 One more time!',
+                '🎈 Almost there!'
+            ];
+            
+            if (match.isCorrect) {
+                const message = greatMessages[Math.floor(Math.random() * greatMessages.length)];
+                showFeedback(feedback, message, 'correct');
+                
+                if (currentSpeakMode === 'challenge') {
+                    // Award points (more if no hint was used)
+                    const points = usedHint ? 5 : 10;
+                    challengeScore += points;
+                    challengeCorrect++;
+                    challengeTotal++;
+                    
+                    // Record in analytics
+                    const currentSession = analytics.sessions[analytics.sessions.length - 1];
+                    currentSession.results.push({
+                        word: word.name,
+                        correct: true,
+                        usedHint: usedHint
+                    });
+                    
+                    analytics.totalCorrect++;
+                    analytics.totalAttempts++;
+                    
+                    // Celebrate!
+                    celebrate();
+                    
+                    // Move to next word after celebration
+                    setTimeout(() => {
+                        currentWordIndex++;
+                        updateChallengeDisplay();
+                    }, 2500);
+                } else {
+                    // Learn mode - just positive feedback
+                    analytics.totalCorrect++;
+                    analytics.totalAttempts++;
+                }
+                
+            } else if (match.score >= 30) {
+                // Close but not quite
+                const message = goodMessages[Math.floor(Math.random() * goodMessages.length)];
+                showFeedback(feedback, `${message} You said "${match.transcript}". Try: "${word.name}"`, 'incorrect');
+                
+                if (currentSpeakMode === 'challenge') {
+                    analytics.totalAttempts++;
+                }
+                
+            } else {
+                // Needs another try
+                const message = tryAgainMessages[Math.floor(Math.random() * tryAgainMessages.length)];
+                showFeedback(feedback, `${message} The word is "${word.name}"`, 'incorrect');
+                
+                if (currentSpeakMode === 'challenge') {
+                    analytics.totalAttempts++;
+                }
+            }
+            
+            saveAnalytics();
+        }
+
+        // ==================== CELEBRATION ANIMATION ====================
+        function celebrate() {
+            const celebration = document.getElementById('celebration');
+            const successMessage = document.getElementById('successMessage');
+            
+            // Show success message
+            successMessage.style.display = 'block';
+            successMessage.classList.remove('hide');
+            
+            // Create confetti
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + '%';
+                confetti.style.background = ['#FF6B35', '#F7931E', '#4CAF50', '#2196F3', '#9C27B0'][Math.floor(Math.random() * 5)];
+                confetti.style.animationDelay = Math.random() * 0.5 + 's';
+                celebration.appendChild(confetti);
+                
+                // Remove after animation
+                setTimeout(() => confetti.remove(), 3000);
+            }
+            
+            // Hide success message
+            setTimeout(() => {
+                successMessage.classList.add('hide');
+                setTimeout(() => {
+                    successMessage.style.display = 'none';
+                }, 300);
+            }, 2000);
+        }
+
+        // ==================== FEEDBACK DISPLAY ====================
+        function showFeedback(elementId, message, type) {
+            const feedback = document.getElementById(elementId);
+            feedback.textContent = message;
+            feedback.className = `feedback show ${type}`;
+        }
+
+        function hideFeedback(elementId) {
+            const feedback = document.getElementById(elementId);
+            feedback.classList.remove('show');
+        }
+
+        // ==================== SCORING & LEADERBOARD ====================
+        function saveScore() {
+            const name = document.getElementById('playerName').value.trim() || 'Anonymous';
+            
+            const score = {
+                name: name,
+                score: challengeScore,
+                correct: challengeCorrect,
+                total: challengeTotal,
+                accuracy: challengeTotal > 0 ? Math.round((challengeCorrect / challengeTotal) * 100) : 0,
+                category: wordPacks[currentCategory].name,
+                timestamp: new Date().toISOString()
+            };
+            
+            // Get existing scores
+            let scores = JSON.parse(localStorage.getItem('gurmukhiScores') || '[]');
+            scores.push(score);
+            
+            // Sort by score (descending)
+            scores.sort((a, b) => b.score - a.score);
+            
+            // Keep top 20
+            scores = scores.slice(0, 20);
+            
+            // Save
+            localStorage.setItem('gurmukhiScores', JSON.stringify(scores));
+            
+            // Close modal and show scoreboard
+            document.getElementById('nameModal').classList.remove('active');
+            document.getElementById('playerName').value = '';
+            showScoreboard();
+        }
+
+        function renderScoreboard() {
+            const scores = JSON.parse(localStorage.getItem('gurmukhiScores') || '[]');
+            const container = document.getElementById('scoresList');
+            
+            if (scores.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: var(--text-light); padding: 2rem;">No scores yet. Play a challenge to get on the board!</p>';
+                return;
+            }
+            
+            container.innerHTML = scores.map((score, index) => {
+                const rank = index + 1;
+                const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `${rank}.`;
+                const rankClass = rank === 1 ? 'gold' : rank === 2 ? 'silver' : rank === 3 ? 'bronze' : '';
+                
+                return `
+                    <div class="score-entry ${rankClass}">
+                        <div class="score-rank">${medal}</div>
+                        <div class="score-name">${score.name}</div>
+                        <div class="score-points">${score.score} pts</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function clearScores() {
+            if (confirm('Are you sure you want to clear all high scores?')) {
+                localStorage.removeItem('gurmukhiScores');
+                renderScoreboard();
+            }
+        }
+
+        // ==================== PARENT DASHBOARD & ANALYTICS ====================
+        function loadAnalytics() {
+            const saved = localStorage.getItem('gurmukhiAnalytics');
+            if (saved) {
+                analytics = JSON.parse(saved);
+            }
+        }
+
+        function saveAnalytics() {
+            localStorage.setItem('gurmukhiAnalytics', JSON.stringify(analytics));
+        }
+
+        function updateParentDashboard() {
+            // Total sessions
+            document.getElementById('totalSessions').textContent = analytics.sessions.length;
+            
+            // Overall accuracy
+            const accuracy = analytics.totalAttempts > 0 
+                ? Math.round((analytics.totalCorrect / analytics.totalAttempts) * 100) 
+                : 0;
+            document.getElementById('overallAccuracy').textContent = accuracy + '%';
+            document.getElementById('accuracyBar').style.width = accuracy + '%';
+            
+            // Words mastered (words with >80% accuracy)
+            const wordStats = {};
+            analytics.sessions.forEach(session => {
+                session.results.forEach(result => {
+                    if (!wordStats[result.word]) {
+                        wordStats[result.word] = { correct: 0, total: 0 };
+                    }
+                    wordStats[result.word].total++;
+                    if (result.correct) wordStats[result.word].correct++;
+                });
+            });
+            
+            const masteredWords = Object.values(wordStats).filter(stat => 
+                stat.total >= 3 && (stat.correct / stat.total) >= 0.8
+            ).length;
+            document.getElementById('wordsMastered').textContent = masteredWords;
+            
+            // Favorite category
+            const categoryCount = {};
+            analytics.sessions.forEach(session => {
+                categoryCount[session.category] = (categoryCount[session.category] || 0) + 1;
+            });
+            
+            const favoriteCategory = Object.keys(categoryCount).length > 0
+                ? Object.keys(categoryCount).sort((a, b) => categoryCount[b] - categoryCount[a])[0]
+                : '-';
+            document.getElementById('favoriteCategory').textContent = favoriteCategory;
+            
+            // Recent performance (last 10 sessions)
+            const recent = analytics.sessions.slice(-10);
+            const recentContainer = document.getElementById('recentPerformance');
+            
+            if (recent.length === 0) {
+                recentContainer.innerHTML = '<p style="text-align: center; color: var(--text-light); padding: 1rem;">No sessions yet</p>';
+            } else {
+                const performanceHTML = recent.reverse().map((session, index) => {
+                    const correct = session.results.filter(r => r.correct).length;
+                    const total = session.results.length;
+                    const acc = total > 0 ? Math.round((correct / total) * 100) : 0;
+                    
+                    return `
+                        <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #eee;">
+                            <span>${session.category}</span>
+                            <span style="color: var(--primary); font-weight: 600;">${acc}%</span>
+                        </div>
+                    `;
+                }).join('');
+                
+                recentContainer.innerHTML = performanceHTML;
+            }
+        }
+
+        // ==================== START APPLICATION ====================
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+    </script>
+</body>
+</html>
