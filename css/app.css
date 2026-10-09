@@ -180,3 +180,9 @@ canvas.pad { width: 100%; aspect-ratio: 1; background: #fff; border-radius: 22px
   .opt { font-size: 18px; min-height: 76px; }
   .letter-grid { grid-template-columns: repeat(5, 1fr); }
 }
+
+/* auto-next countdown */
+.next-btn { position: relative; overflow: hidden; }
+.next-btn .count { display: inline-grid; place-items: center; min-width: 30px; height: 30px; margin-left: 6px; border-radius: 50%; background: rgba(255,255,255,.55); font-size: 17px; }
+.next-btn .countbar { position: absolute; left: 0; bottom: 0; height: 5px; width: 100%; background: var(--saffron-d); transform-origin: left; animation: countdown linear forwards; }
+@keyframes countdown { from { transform: scaleX(1); } to { transform: scaleX(0); } }
