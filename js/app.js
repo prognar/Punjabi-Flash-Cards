@@ -101,6 +101,7 @@
           ${toggleRow('showRoman', 'Show English-letter spelling', f.settings)}
           ${toggleRow('speech', 'Speaking practice (microphone)', f.settings)}
           ${toggleRow('writing', 'Letter writing practice', f.settings)}
+          <div class="toggle"><span>After a correct answer</span><select id="an" class="input" style="width:auto">${[[0, 'Wait for Next'], [3, 'Next in 3 s'], [5, 'Next in 5 s'], [8, 'Next in 8 s']].map(([v, l]) => `<option value="${v}" ${v === (+f.settings.autoNext || 0) ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
           <div class="toggle"><span>Cards per session</span><select id="ss" class="input" style="width:auto">${[8, 12, 16, 20, 30].map(n => `<option ${n === f.settings.sessionSize ? 'selected' : ''}>${n}</option>`).join('')}</select></div>
         </div>
         <div class="row" style="margin-top:18px">
@@ -127,6 +128,7 @@
         if (!f.name.trim()) { toast('Add a name first'); return; }
         app.querySelectorAll('[data-set]').forEach(i => { f.settings[i.dataset.set] = i.checked; });
         f.settings.sessionSize = +document.getElementById('ss').value;
+        f.settings.autoNext = +document.getElementById('an').value;
         let id;
         if (existing) { Store.updateProfile(existing.id, { name: f.name.trim(), avatar: f.avatar, type: f.type, settings: f.settings }); id = existing.id; }
         else { id = Store.addProfile({ name: f.name.trim(), avatar: f.avatar, type: f.type }).id; Store.updateProfile(id, { settings: f.settings }); }
@@ -261,11 +263,32 @@
     holder.appendChild(fb);
     if (it.note) fb.insertAdjacentHTML('beforeend', `<div class="note">${esc(it.note)}</div>`);
     const btn = document.createElement('div'); btn.className = 'actions';
-    btn.innerHTML = `<button class="btn ghost" data-k="hear">🔊 Hear it</button><button class="btn primary big" data-k="next">Next →</button>`;
+    // Auto-next: only after a correct answer, only if the learner chose a countdown. Misses always wait for a click.
+    const secs = ok && !opts.noAuto ? (+P.settings.autoNext || 0) : 0;
+    btn.innerHTML = `<button class="btn ghost" data-k="hear">🔊 Hear it</button>${secs ? '<button class="btn ghost" data-k="stay">⏸ Wait</button>' : ''}<button class="btn primary big next-btn" data-k="next">Next →${secs ? ` <span class="count">${secs}</span><i class="countbar" style="animation-duration:${secs}s"></i>` : ''}</button>`;
     holder.appendChild(btn);
-    btn.onclick = e => { const k = e.target.closest('[data-k]'); if (!k) return; if (k.dataset.k === 'hear') speak(it); else next(); };
+    let timer = null;
+    const stopCount = () => {
+      clearInterval(timer); timer = null;
+      const nb = btn.querySelector('[data-k="next"]'); nb.innerHTML = 'Next →';
+      const st = btn.querySelector('[data-k="stay"]'); if (st) st.remove();
+    };
+    btn.onclick = e => {
+      const k = e.target.closest('[data-k]'); if (!k) return;
+      if (k.dataset.k === 'hear') { stopCount(); speak(it); }
+      else if (k.dataset.k === 'stay') stopCount();
+      else { stopCount(); next(); }
+    };
     if (!ok || opts.showAnswer) speak(it);
-    if (ok && !opts.noAuto) { const pos = SES.pos; setTimeout(() => { if (SES && SES.pos === pos && route.name === 'session') next(); }, isKid() ? 1300 : 900); }
+    if (secs) {
+      const pos = SES.pos; let left = secs;
+      timer = setInterval(() => {
+        if (!SES || SES.pos !== pos || route.name !== 'session') { clearInterval(timer); return; }
+        left--;
+        const c = btn.querySelector('.count'); if (c) c.textContent = left;
+        if (left <= 0) { clearInterval(timer); next(); }
+      }, 1000);
+    }
     btn.querySelector('[data-k="next"]').focus({ preventScroll: true });
   }
 

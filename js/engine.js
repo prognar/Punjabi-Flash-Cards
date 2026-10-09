@@ -13,8 +13,8 @@
   const dayKey = ts => { const d = new Date(ts); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
 
   const PROFILE_DEFAULTS = {
-    kid:   { sessionSize: 12, maxNew: 4, showGurmukhi: true, showRoman: true, speech: true, writing: true },
-    adult: { sessionSize: 20, maxNew: 6, showGurmukhi: true, showRoman: true, speech: true, writing: true }
+    kid:   { sessionSize: 12, maxNew: 4, autoNext: 0, showGurmukhi: true, showRoman: true, speech: true, writing: true },
+    adult: { sessionSize: 20, maxNew: 6, autoNext: 0, showGurmukhi: true, showRoman: true, speech: true, writing: true }
   };
 
   // ---------------------------------------------------------------- storage

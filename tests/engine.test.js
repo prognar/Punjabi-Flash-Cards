@@ -1,4 +1,6 @@
 global.window = global;
+// deterministic randomness so the simulation is repeatable
+let __seed = 12345; Math.random = () => ((__seed = (__seed * 1103515245 + 12345) % 2147483648) / 2147483648);
 require('../data/content.js'); require('../js/model.js'); require('../js/engine.js');
 const E = window.ENGINE, M = window.MODEL;
 let T = new Date('2026-10-01T18:00:00').getTime();
