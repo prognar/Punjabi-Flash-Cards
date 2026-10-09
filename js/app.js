@@ -179,8 +179,10 @@
       <div class="hero stack">
         <div class="lesson-no">Lesson ${L.n} of ${lessons.length}</div>
         <h1>${L.letter.length ? `<span class="gur">${L.letter.map(id => items[id].glyph).join(' ')}</span> · ` : ''}${L.vocab.length} words · ${L.phrase.length} phrases</h1>
-        <div class="bar onhero"><i style="width:${Math.round(s.pct * 100)}%"></i></div>
+        <div class="bar onhero stacked" title="Dark = mastered · light = in progress"><i class="part" style="width:${Math.round(s.progress * 100)}%"></i><i style="width:${Math.round(s.pct * 100)}%"></i></div>
+        <div class="small" style="font-weight:700">Lesson progress ${Math.round(s.progress * 100)}% · mastered ${s.mastered}/${s.total}</div>
         <div class="small" style="font-weight:600">${esc(gateMsg)}</div>
+        ${s.lockTomorrow ? `<div class="small tomorrow">🌙 ${s.lockTomorrow} card${s.lockTomorrow > 1 ? 's' : ''} learned today. Get ${s.lockTomorrow > 1 ? 'them' : 'it'} right again on another day to lock ${s.lockTomorrow > 1 ? 'them' : 'it'} in as mastered — that's what opens the next lesson.</div>` : ''}
         <button class="btn primary big block" data-act="start" data-scope="all">▶ Today's practice</button>
       </div>
       <div class="stack" style="margin-top:16px">
@@ -218,7 +220,8 @@
   function startSession(scope) {
     const { queue, info } = E.buildSession(PR, P, window.MODEL, scope);
     if (!queue.length) { toast('Nothing to practice here right now 🎉'); return; }
-    SES = { scope, queue, pos: 0, info, right: 0, wrong: 0, missed: new Set(), answered: false, startUnlocked: PR.unlocked };
+    SES = { scope, queue, pos: 0, info, right: 0, wrong: 0, missed: new Set(), answered: false, startUnlocked: PR.unlocked,
+      startBoxes: Object.fromEntries(Object.entries(PR.items).map(([id, x]) => [id, x.box])), startMastered: E.lessonStats(PR, lessons[PR.unlocked - 1]).mastered };
     go('session');
   }
 
@@ -495,6 +498,18 @@
         <h1>${s.advanced ? `Lesson ${PR.unlocked} unlocked!` : pct >= 0.9 ? 'Amazing!' : pct >= 0.7 ? 'Great practice!' : 'Good effort!'}</h1>
         <p class="muted">${s.right} of ${total} correct${s.advanced ? ' · new letters, words and phrases are ready' : ''}</p>
       </div>
+      ${(() => {
+        const ups = Object.entries(PR.items).filter(([id, x]) => x.box > ((s.startBoxes || {})[id] ?? 0)).length;
+        const st = E.lessonStats(PR, lessons[PR.unlocked - 1]);
+        const newM = s.advanced ? 0 : Math.max(0, st.mastered - (s.startMastered || 0));
+        return `<div class="card stack" style="margin-bottom:14px">
+          <div class="row"><b style="font-size:22px">⬆ ${ups}</b><span>card${ups === 1 ? '' : 's'} leveled up${newM ? ` · <b>${newM}</b> newly mastered` : ''}</span></div>
+          <div class="bar stacked"><i class="part" style="width:${Math.round(st.progress * 100)}%"></i><i style="width:${Math.round(st.pct * 100)}%"></i></div>
+          <div class="small muted">Lesson ${PR.unlocked} progress ${Math.round(st.progress * 100)}% · mastered ${st.mastered}/${st.total}</div>
+          ${!ups && total ? '<div class="small tomorrow">Cards only level up once per day (twice on the first day), so extra practice today keeps them fresh but the next jump comes tomorrow.</div>' : ''}
+          ${st.lockTomorrow && ups ? `<div class="small tomorrow">🌙 ${st.lockTomorrow} card${st.lockTomorrow > 1 ? 's are' : ' is'} waiting for tomorrow's check to become mastered.</div>` : ''}
+        </div>`;
+      })()}
       ${missed.length ? `<div class="card"><h3>Coming back soon</h3><div class="muted small" style="margin-bottom:8px">These will show up more often until they stick.</div>
         <div class="list">${missed.map(rowHTML).join('')}</div></div>` : ''}
       <div class="actions"><button class="btn" data-act="home">Home</button><button class="btn primary big" data-act="again">Practice more</button></div>`;

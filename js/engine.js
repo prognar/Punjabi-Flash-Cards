@@ -161,6 +161,18 @@
       out.total += ks.total; out.mastered += ks.mastered; out.learning += ks.learning; out.fresh += ks.fresh;
     });
     out.pct = out.total ? out.mastered / out.total : 1;
+    // partial credit so every correct answer visibly moves the bar (levels + separate days, up to the requirement)
+    const today = dayKey(now());
+    let pts = 0, lockTomorrow = 0;
+    KINDS.forEach(k => L[k].forEach(id => {
+      const s = peek(pr, id);
+      if (!s || !s.intro) return;
+      if (itemStatus(pr, id, req, true) === 'mastered') { pts += 1; return; }
+      pts += (Math.min(s.box, req.box) + Math.min(s.days.length, req.days)) / (req.box + req.days);
+      if (s.days.includes(today) && s.box >= 2) lockTomorrow++; // learned today; needs another day to count as mastered
+    }));
+    out.progress = out.total ? pts / out.total : 1;
+    out.lockTomorrow = lockTomorrow;
     return out;
   }
   const GATE = { overall: 0.9, perKind: 0.8, review: 0.7 };
@@ -236,10 +248,11 @@
       reviewIds = reviewRanked.filter(x => x[1] > 0.5).slice(0, size).map(x => x[0]);
     } else {
       // --- new items for this lesson (in teaching order); fewer when struggling or many still shaky
-      const shaky = curIds.filter(id => itemStatus(pr, id, req) === 'learning').length;
+      // "shaky" = introduced but not yet answered well (level < 2). Cards waiting only for another day don't block new ones.
+      const shaky = curIds.filter(id => { const s = peek(pr, id); return s && s.intro && s.box < 2 && !isMastered(pr, id, req); }).length;
       let maxNew = set.maxNew || 4;
       if (acc < 0.7) maxNew = Math.max(1, Math.floor(maxNew / 2));
-      if (shaky >= 8) maxNew = Math.min(maxNew, 1);
+      if (shaky >= 6) maxNew = Math.min(maxNew, 1);
       // earlier lessons first (catch-up after jumping ahead), then this lesson, in teaching order
       // (round-robin across letters / words / phrases so one session touches each section)
       const fresh = prevIds.concat(curIds).filter(id => !(peek(pr, id) || {}).intro);

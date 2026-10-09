@@ -186,3 +186,10 @@ canvas.pad { width: 100%; aspect-ratio: 1; background: #fff; border-radius: 22px
 .next-btn .count { display: inline-grid; place-items: center; min-width: 30px; height: 30px; margin-left: 6px; border-radius: 50%; background: rgba(255,255,255,.55); font-size: 17px; }
 .next-btn .countbar { position: absolute; left: 0; bottom: 0; height: 5px; width: 100%; background: var(--saffron-d); transform-origin: left; animation: countdown linear forwards; }
 @keyframes countdown { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+
+/* stacked progress: light = in progress, dark = mastered */
+.bar.stacked { position: relative; }
+.bar.stacked > i { position: absolute; left: 0; top: 0; }
+.bar.stacked > i.part { background: #8fd3c9; }
+.tomorrow { background: rgba(255,255,255,.6); border-radius: 12px; padding: 8px 12px; color: #5b4a2e; }
+.card .tomorrow { background: #f6f1ff; color: #4a3d73; }
