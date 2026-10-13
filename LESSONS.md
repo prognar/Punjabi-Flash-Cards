@@ -39,6 +39,19 @@ Lesson sizes are set in `perLesson` in `data/content.js`.
   - review accuracy of at least 70%.
 - **Simulated pace** (`tests/engine.test.js`): about 3 days per lesson for a strong learner, about 6 for an average one, and about 10 or more for a struggling one.
 
+## Duolingo-style practice (sentences & conversations)
+`data/sentences.js` adds practice in context:
+- **Pick the missing word**: a Punjabi sentence with one word blanked out, plus the English meaning.
+- **Write it in Punjabi / English**: build the sentence from word tiles. Extra decoy tiles are mixed in.
+- **Pick the best reply**: someone says something in Punjabi and you choose the right response (25 short conversations).
+- **Tap what you hear**: audio only.
+- **Match the pairs**: one round per session, using words you've met.
+- **Tap any word in a sentence** to see its meaning.
+- **Repetition**: each word being learned comes back 2–3 times per session, each time in a different exercise. Slips on those repeat cards cost less than a fresh miss.
+- **Pattern sentences**: built automatically for each word from its class (thing, animal, food, adjective, verb…). For example, "Where is the ___?", "Give me the ___", "I like ___". Hand-written sentences cover the rest.
+- **Coverage**: about 130 of 150 words and 84 of 104 phrases have sentences; the rest use the flash-card style exercises.
+- **All sentence Punjabi was written for the app** — have the teacher check it.
+
 ## Exercises
 | | New | Learning | Stronger |
 |---|---|---|---|

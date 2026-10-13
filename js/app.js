@@ -242,7 +242,8 @@
       <div id="ex" class="ex"></div>`;
     app.onclick = e => { const b = e.target.closest('[data-act="quit"]'); if (b) { if (SES.pos === 0 || confirm('Stop this session? Answers so far are saved.')) finishSession(); } };
     const ex = document.getElementById('ex');
-    const R = { intro: exIntro, 'mc-en2pa': exMcEn2Pa, 'mc-pa2en': exMcPa2En, 'pick-letter': exPickLetter, 'name-letter': exNameLetter, 'word-letter': exWordLetter, trace: exTrace, write: exTrace, say: exSay, build: exBuild };
+    const R = { intro: exIntro, 'mc-en2pa': exMcEn2Pa, 'mc-pa2en': exMcPa2En, 'pick-letter': exPickLetter, 'name-letter': exNameLetter, 'word-letter': exWordLetter, trace: exTrace, write: exTrace, say: exSay, build: exBuild,
+      fill: exFill, 'tiles-en2pa': exTilesEn2Pa, 'tiles-pa2en': exTilesPa2En, listen: exListen, respond: exRespond, match: exMatch };
     let fn = R[card.ex] || exMcEn2Pa;
     if ((card.ex === 'say') && P.settings.speech === false) fn = exSay; // exSay handles no-mic (reveal + self-check)
     if ((card.ex === 'trace' || card.ex === 'write') && P.settings.writing === false) fn = exPickLetter;
@@ -255,14 +256,19 @@
   /** Grade the current card. ok=true/false. Shows feedback and a next button (auto-advance on correct). */
   function grade(ok, it, card, holder, opts = {}) {
     if (SES.answered) return; SES.answered = true;
-    E.record(PR, it.id, ok, card.ex, card.review);
-    if (ok) SES.right++; else { SES.wrong++; SES.missed.add(it.id); E.requeueMiss(SES.queue, SES.pos, card, window.MODEL); }
+    if (!opts.skipRecord) {
+      E.record(PR, it.id, ok, card.ex, card.review, { soft: card.reinforce || card.retry });
+      if (ok) SES.right++; else { SES.wrong++; SES.missed.add(it.id); E.requeueMiss(SES.queue, SES.pos, card, window.MODEL); }
+    }
     save();
+    const hear = opts.hear || (() => speak(it));
     const fb = document.createElement('div');
     fb.className = 'feedback ' + (ok ? 'good' : 'bad');
+    const answer = opts.answerHTML != null ? opts.answerHTML
+      : it.kind === 'letter' ? `<span class="gur" style="font-size:44px">${esc(it.glyph)}</span> ${esc(it.rom)}` : `${paHTML(it)}<div class="muted">${esc(it.en)}</div>`;
     fb.innerHTML = ok
-      ? `${praise()}${opts.showAnswer ? `<div class="answer">${paHTML(it)}</div>` : ''}`
-      : `${encourage()}<div class="answer">${it.kind === 'letter' ? `<span class="gur" style="font-size:44px">${esc(it.glyph)}</span> ${esc(it.rom)}` : `${paHTML(it)}<div class="muted">${esc(it.en)}</div>`}</div>`;
+      ? `${praise()}${opts.showAnswer || opts.answerHTML ? `<div class="answer">${answer}</div>` : ''}`
+      : `${encourage()}<div class="answer">${answer}</div>`;
     holder.appendChild(fb);
     if (it.note) fb.insertAdjacentHTML('beforeend', `<div class="note">${esc(it.note)}</div>`);
     const btn = document.createElement('div'); btn.className = 'actions';
@@ -278,11 +284,11 @@
     };
     btn.onclick = e => {
       const k = e.target.closest('[data-k]'); if (!k) return;
-      if (k.dataset.k === 'hear') { stopCount(); speak(it); }
+      if (k.dataset.k === 'hear') { stopCount(); hear(); }
       else if (k.dataset.k === 'stay') stopCount();
       else { stopCount(); next(); }
     };
-    if (!ok || opts.showAnswer) speak(it);
+    if (!ok || opts.showAnswer) hear();
     if (secs) {
       const pos = SES.pos; let left = secs;
       timer = setInterval(() => {
@@ -476,6 +482,170 @@
         const ok = picked.map(t => t.g).join(' ') === ans.join(' ');
         el.querySelectorAll('button').forEach(b => b.disabled = true);
         grade(ok, it, card, el, { showAnswer: true });
+      }
+    };
+  }
+
+  // ============================================================ sentence & conversation exercises
+  const MODEL = window.MODEL;
+  const romOf = w => {
+    const hit = Object.values(items).find(x => x.kind !== 'letter' && x.paAnswers.includes(w));
+    if (hit) return hit.romAnswers[0];
+    for (const sn of MODEL.sentences) { const i = sn.pa.indexOf(w); if (i >= 0 && sn.rom[i]) return sn.rom[i]; }
+    return S.gurToLatin(w);
+  };
+  function pickSentence(it) {
+    const list = MODEL.sentByFocus[it.id] || [];
+    if (!list.length) return null;
+    const hand = list.filter(s => !s.template || s.template === 'phrase');
+    const pool = hand.length && Math.random() < 0.5 ? hand : list; // hand-written sentences get extra weight
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
+  const sayTokens = sn => S.say({ pa: sn.pa.join(' '), rom: sn.rom.join(' ') }, { rate: isKid() ? 0.72 : 0.85 });
+  /** Sentence as tappable words (tap = meaning). blank: index to hide; fill: text to show in the blank */
+  function sentHTML(sn, blank = -1, fill = null) {
+    return `<div class="sent">${sn.pa.map((w, i) => i === blank
+      ? `<span class="tok blank ${fill ? 'filled' : ''}">${fill ? `<span class="gur">${esc(fill)}</span>${setR() ? `<span class="rom">${esc(romOf(fill))}</span>` : ''}` : '<span class="gur">＿＿＿</span>'}</span>`
+      : `<button class="tok" data-gloss="${esc(sn.gloss[i] || '')}">${setG() ? `<span class="gur">${esc(w)}</span>` : ''}${setR() ? `<span class="rom">${esc(sn.rom[i] || romOf(w))}</span>` : ''}</button>`).join('')}</div>`;
+  }
+  // tap a word → small bubble with its meaning (like Duolingo hints)
+  document.addEventListener('click', e => {
+    const t = e.target.closest('.tok[data-gloss]');
+    document.querySelectorAll('.gloss-pop').forEach(x => x.remove());
+    if (!t || !t.dataset.gloss) return;
+    const pop = document.createElement('div'); pop.className = 'gloss-pop'; pop.textContent = t.dataset.gloss;
+    t.appendChild(pop); setTimeout(() => pop.remove(), 2200);
+  });
+  const fullSentHTML = sn => `${sentHTML(sn)}<div class="muted">${esc(sn.en)}</div>`;
+
+  function exFill(el, it, card) {
+    const sn = pickSentence(it); if (!sn) return exMcEn2Pa(el, it, card);
+    const right = sn.pa[sn.blank];
+    let wrong = sn.wrong.filter(w => w !== right);
+    if (wrong.length < 3) {
+      const same = order[it.kind].map(id => items[id]).filter(x => x.id !== it.id && (it.cls ? x.cls === it.cls : true) && x.paAnswers[0] !== right && x.lesson <= PR.unlocked + 1);
+      const any = order.vocab.concat(order.phrase).map(id => items[id]).filter(x => x.paAnswers[0] !== right && !x.paAnswers[0].includes(' '));
+      wrong = wrong.concat(shuffle(same.length >= 2 ? same : any).map(x => x.paAnswers[0]).filter(w => !wrong.includes(w) && w !== right)).slice(0, 3);
+    }
+    const opts = shuffle([right].concat(wrong.slice(0, 3)));
+    el.innerHTML = `
+      <div class="prompt-label">Pick the missing word</div>
+      <div class="prompt">${sentHTML(sn, sn.blank)}<div class="en-sub">${esc(sn.en)}</div><button class="btn ghost" data-hear>🔊 Hear it</button></div>
+      <div class="options">${opts.map((w, i) => `<button class="opt" data-i="${i}">${setG() ? `<span class="gur">${esc(w)}</span>` : ''}${setR() ? `<span class="rom">${esc(romOf(w))}</span>` : ''}</button>`).join('')}</div>`;
+    el.querySelector('[data-hear]').onclick = ev => { ev.stopPropagation(); sayTokens(sn); };
+    el.onclick = e => {
+      const b = e.target.closest('.opt'); if (!b || SES.answered) return;
+      const ok = opts[+b.dataset.i] === right;
+      el.querySelectorAll('.opt').forEach((x, i) => { x.disabled = true; if (opts[i] === right) x.classList.add('right'); });
+      if (!ok) b.classList.add('wrong');
+      el.querySelector('.prompt .sent').outerHTML = sentHTML(sn, sn.blank, right);
+      grade(ok, it, card, el, { answerHTML: fullSentHTML(sn), hear: () => sayTokens(sn), showAnswer: true });
+    };
+  }
+
+  function tilesExercise(el, it, card, dir) {
+    const sn = pickSentence(it); if (!sn) return exMcEn2Pa(el, it, card);
+    const toPa = dir === 'en2pa';
+    const clean = w => w.toLowerCase().replace(/[.,!?]/g, '');
+    const target = toPa ? sn.pa.map(w => w.replace(/[?,.!]/g, '')) : sn.en.split(/\s+/).map(clean);
+    // decoy tiles from other sentences
+    const others = shuffle(MODEL.sentences.filter(x => x !== sn)).slice(0, 12);
+    const decoyPool = toPa ? others.flatMap(x => x.pa.map(w => w.replace(/[?,.!]/g, ''))) : others.flatMap(x => x.en.split(/\s+/).map(clean));
+    const decoys = [...new Set(decoyPool.filter(w => !target.includes(w)))].slice(0, Math.min(4, Math.max(2, Math.ceil(target.length / 2))));
+    let pool = shuffle(target.map((w, i) => ({ w, i })).concat(decoys.map((w, j) => ({ w, i: 100 + j }))));
+    const picked = [];
+    const tile = t => toPa ? `${setG() ? `<span class="gur">${esc(t.w)}</span>` : ''}${setR() ? `<span class="rom">${esc(t.i < 100 ? (sn.rom[t.i] || romOf(t.w)) : romOf(t.w))}</span>` : ''}` : `<span class="en-tile">${esc(t.w)}</span>`;
+    const draw = () => {
+      el.innerHTML = `
+        <div class="prompt-label">${toPa ? 'Write this in Punjabi' : 'Write this in English'}</div>
+        <div class="prompt">${toPa ? `<div class="en-prompt">${esc(sn.en)}</div>` : `${sentHTML(sn)}<button class="btn ghost" data-hear>🔊 Hear it</button>`}</div>
+        <div class="tiles answer">${picked.map((t, i) => `<button class="tile" data-back="${i}">${tile(t)}</button>`).join('')}</div>
+        <div class="tiles">${pool.map((t, i) => `<button class="tile" data-take="${i}">${tile(t)}</button>`).join('')}</div>
+        <div class="actions"><button class="btn teal big" data-k="check" ${picked.length ? '' : 'disabled'}>Check</button></div>`;
+      const h = el.querySelector('[data-hear]'); if (h) h.onclick = ev => { ev.stopPropagation(); sayTokens(sn); };
+    };
+    draw();
+    if (!toPa) sayTokens(sn);
+    el.onclick = e => {
+      if (SES.answered) return;
+      const tk = e.target.closest('[data-take]'), bk = e.target.closest('[data-back]'), ck = e.target.closest('[data-k="check"]');
+      if (tk) { picked.push(pool.splice(+tk.dataset.take, 1)[0]); draw(); }
+      else if (bk) { pool.push(picked.splice(+bk.dataset.back, 1)[0]); draw(); }
+      else if (ck) {
+        const ok = picked.map(t => t.w).join(' ') === target.join(' ');
+        el.querySelectorAll('.tiles button, [data-k="check"]').forEach(b => b.disabled = true);
+        grade(ok, it, card, el, { answerHTML: fullSentHTML(sn), hear: () => sayTokens(sn), showAnswer: true });
+      }
+    };
+  }
+  const exTilesEn2Pa = (el, it, card) => tilesExercise(el, it, card, 'en2pa');
+  const exTilesPa2En = (el, it, card) => tilesExercise(el, it, card, 'pa2en');
+
+  function exListen(el, it, card) {
+    if (S.ttsMode() === 'none') return exMcPa2En(el, it, card);
+    const opts = shuffle([it].concat(distractors(it, 3, 'pa')));
+    mcRender(el, it, card,
+      `<div class="prompt-label">Tap what you hear</div><div class="prompt"><button class="speak-btn" data-hear aria-label="Play again">🔊</button><div class="muted small" style="margin-top:8px">Tap to hear it again</div></div>`,
+      opts, o => `${setG() ? `<span class="gur">${esc(o.pa)}</span>` : ''}${setR() ? `<span class="rom">${esc(o.rom)}</span>` : ''}`, o => o.id === it.id);
+    speak(it);
+  }
+
+  function exRespond(el, it, card) {
+    const list = MODEL.convByFocus[it.id] || [];
+    if (!list.length) return exFill(el, it, card);
+    const c = list[Math.floor(Math.random() * list.length)];
+    const opts = shuffle([c.reply].concat(c.wrong.slice(0, 2)));
+    const bubble = x => `${setG() ? `<span class="gur">${esc(x.pa)}</span>` : ''}${setR() ? `<span class="rom">${esc(x.rom)}</span>` : ''}`;
+    el.innerHTML = `
+      <div class="prompt-label">Pick the best reply</div>
+      <div class="chat">
+        <div class="bubble them"><div class="who">🧑</div><div><div>${bubble(c.prompt)}</div><button class="link-btn" data-k="mean">What does this mean?</button><div class="muted small hidden" id="mean">${esc(c.prompt.en)}</div></div><button class="icon-btn sm" data-k="hearp" aria-label="Hear">🔊</button></div>
+      </div>
+      <div class="options one">${opts.map((o, i) => `<button class="opt reply" data-i="${i}">${bubble(o)}</button>`).join('')}</div>`;
+    const sayP = () => S.say({ pa: c.prompt.pa, rom: c.prompt.rom }, { rate: isKid() ? 0.72 : 0.85 });
+    const sayR = () => S.say({ pa: c.reply.pa, rom: c.reply.rom }, { rate: isKid() ? 0.72 : 0.85 });
+    sayP();
+    el.onclick = e => {
+      const k = e.target.closest('[data-k]');
+      if (k && k.dataset.k === 'mean') { el.querySelector('#mean').classList.remove('hidden'); k.remove(); return; }
+      if (k && k.dataset.k === 'hearp') { sayP(); return; }
+      const b = e.target.closest('.opt'); if (!b || SES.answered) return;
+      const ok = opts[+b.dataset.i] === c.reply;
+      el.querySelectorAll('.opt').forEach((x, i) => { x.disabled = true; if (opts[i] === c.reply) x.classList.add('right'); });
+      if (!ok) b.classList.add('wrong');
+      grade(ok, it, card, el, { answerHTML: `<div class="chat mini"><div class="bubble them">${bubble(c.prompt)}<div class="muted small">${esc(c.prompt.en)}</div></div><div class="bubble me">${bubble(c.reply)}<div class="muted small">${esc(c.reply.en)}</div></div></div>`, hear: sayR, showAnswer: true });
+    };
+  }
+
+  function exMatch(el, it, card) {
+    const ids = (card.ids || [card.id]).filter(id => items[id]);
+    const left = shuffle(ids), right = shuffle(ids);
+    const mistakes = new Set(); const done = new Set(); let sel = null;
+    el.innerHTML = `
+      <div class="prompt-label">Match the pairs</div>
+      <div class="match">
+        <div class="col">${left.map(id => `<button class="opt m" data-side="en" data-id="${id}">${esc(items[id].en)}</button>`).join('')}</div>
+        <div class="col">${right.map(id => `<button class="opt m" data-side="pa" data-id="${id}">${setG() ? `<span class="gur">${esc(items[id].pa)}</span>` : ''}${setR() ? `<span class="rom">${esc(items[id].rom)}</span>` : ''}</button>`).join('')}</div>
+      </div>`;
+    el.onclick = e => {
+      const b = e.target.closest('.opt.m'); if (!b || b.disabled || SES.answered) return;
+      if (b.dataset.side === 'pa') speak(items[b.dataset.id]);
+      if (!sel || sel.dataset.side === b.dataset.side) { el.querySelectorAll('.opt.m.sel').forEach(x => x.classList.remove('sel')); sel = b; b.classList.add('sel'); return; }
+      const a = sel; sel = null; a.classList.remove('sel');
+      if (a.dataset.id === b.dataset.id) {
+        [a, b].forEach(x => { x.classList.add('right'); x.disabled = true; });
+        done.add(a.dataset.id);
+        if (done.size === ids.length) {
+          ids.forEach(id => {
+            const ok = !mistakes.has(id);
+            E.record(PR, id, ok, 'match', card.review, { soft: true });
+            if (ok) SES.right++; else { SES.wrong++; SES.missed.add(id); }
+          });
+          grade(mistakes.size === 0, it, card, el, { skipRecord: true, answerHTML: mistakes.size ? `Mixed up: ${[...mistakes].map(id => esc(items[id].en)).join(', ')}` : '', hear: () => {} });
+        }
+      } else {
+        mistakes.add(a.dataset.id); mistakes.add(b.dataset.id);
+        [a, b].forEach(x => { x.classList.add('wrong'); setTimeout(() => x.classList.remove('wrong'), 600); });
       }
     };
   }
