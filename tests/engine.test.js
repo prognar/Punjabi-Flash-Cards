@@ -1,7 +1,7 @@
 global.window = global;
 // deterministic randomness so the simulation is repeatable
 let __seed = 12345; Math.random = () => ((__seed = (__seed * 1103515245 + 12345) % 2147483648) / 2147483648);
-require('../data/content.js'); require('../js/model.js'); require('../js/engine.js');
+require('../data/content.js'); require('../data/sentences.js'); require('../js/model.js'); require('../js/engine.js');
 const E = window.ENGINE, M = window.MODEL;
 let T = new Date('2026-10-01T18:00:00').getTime();
 E._setClock(() => T);
@@ -20,7 +20,7 @@ function simulate(type, accuracy, days, sessionsPerDay) {
         const c = queue[i];
         if (c.ex === 'intro') { E.markIntroduced(pr, c.id); continue; }
         const ok = Math.random() < accuracy;
-        E.record(pr, c.id, ok, c.ex, c.review);
+        (c.ids || [c.id]).forEach(id => E.record(pr, id, ok, c.ex, c.review, { soft: c.reinforce || c.retry }));
         if (!ok) E.requeueMiss(queue, i, c, M);
         T += 20e3;
       }

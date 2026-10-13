@@ -53,5 +53,65 @@
   // map item -> lesson number
   lessons.forEach(L => ['letter', 'vocab', 'phrase'].forEach(k => L[k].forEach(id => { items[id].lesson = L.n; })));
 
-  window.MODEL = { items, order, lessons, slug };
+  // ---------------------------------------------------------------- sentences & conversations
+  const SB = window.SENTENCES || { sentences: [], conversations: [], templates: [], classes: {}, glossary: {} };
+  const norm = s => s.toLowerCase().replace(/\s+/g, ' ').trim();
+  function resolve(ref) {
+    const [k, ...rest] = ref.split(':'); const en = norm(rest.join(':'));
+    const kind = k === 'v' ? 'vocab' : 'phrase';
+    let id = order[kind].find(i => norm(items[i].en) === en) || order[kind].find(i => norm(items[i].en).startsWith(en));
+    if (!id && typeof console !== 'undefined') console.warn('sentence ref not found:', ref);
+    return id || null;
+  }
+  const toks = s => s.split(/\s+/).map(t => t.replace(/_/g, ' '));
+  const article = w => /^[aeiou]/i.test(w) ? 'an' : 'a';
+  const sentences = [], sentByFocus = {};
+  const addSentence = sn => { if (!sn.focus) return; sentences.push(sn); (sentByFocus[sn.focus] = sentByFocus[sn.focus] || []).push(sn); };
+
+  SB.sentences.forEach(([pa, rom, gloss, en, focus, blank, wrong], i) => {
+    const P = toks(pa), R = toks(rom), G = gloss.split('|');
+    addSentence({ id: 's' + i, pa: P, rom: R.length === P.length ? R : P.map(() => ''), gloss: G, en, focus: resolve(focus), blank, wrong: wrong || [], src: 'generated' });
+  });
+  const clsOf = {};
+  Object.entries(SB.classes).forEach(([cls, words]) => words.forEach(w => {
+    const id = order.vocab.find(i => norm(items[i].en.replace(/\s*\(.*?\)/, '')) === w);
+    if (id) { items[id].cls = cls; clsOf[id] = cls; }
+  }));
+  SB.templates.forEach(T => {
+    Object.entries(clsOf).forEach(([id, cls]) => {
+      if (!T.cls.includes(cls)) return;
+      const it = items[id], x = it.en.replace(/\s*\(.*?\)/, '');
+      const P = toks(T.pa), R = toks(T.rom), G = T.gloss.split('|');
+      const xi = P.indexOf('X');
+      P[xi] = it.paAnswers[0]; R[xi] = it.romAnswers[0]; G[xi] = x;
+      addSentence({ id: 't-' + T.id + '-' + id, pa: P, rom: R, gloss: G, en: T.en.replace('{a}', article(x)).replace('{x}', x),
+        focus: id, blank: xi, wrong: [], template: T.id, src: 'generated' });
+    });
+  });
+
+  // multi-word phrases are sentences too (build it from tiles / fill the missing word)
+  const tokGloss = {};
+  sentences.forEach(sn => sn.pa.forEach((t, i) => { if (sn.gloss[i] && !tokGloss[t]) tokGloss[t] = sn.gloss[i]; }));
+  const glossFor = tok => (SB.glossary || {})[tok] || tokGloss[tok] || (() => { const v = order.vocab.concat(order.phrase).find(i => items[i].paAnswers.includes(tok)); return v ? items[v].en : ''; })();
+  order.phrase.forEach(id => {
+    const it = items[id];
+    const P = it.paAnswers[0].replace(/[?,.!]/g, '').trim().split(/\s+/);
+    if (P.length < 2) return;
+    if ((sentByFocus[id] || []).some(sn => sn.pa.join(' ').replace(/[?,.!]/g, '') === P.join(' '))) return; // already written by hand
+    const R0 = it.romAnswers[0].replace(/[?,.!]/g, '').trim().split(/\s+/);
+    const R = R0.length === P.length ? R0 : P.map(() => '');
+    // blank the longest word that isn't a tiny helper
+    let bi = 0; P.forEach((w, i) => { if (w.length > P[bi].length) bi = i; });
+    addSentence({ id: 'ph-' + id, pa: P, rom: R, gloss: P.map(glossFor), en: it.en.replace(/\s*\(.*?\)/, ''), focus: id, blank: bi, wrong: [], template: 'phrase', src: it.src });
+  });
+
+  const conversations = [], convByFocus = {};
+  (SB.conversations || []).forEach(([pPa, pRom, pEn, rPa, rRom, rEn, focus, wrong], i) => {
+    const c = { id: 'c' + i, prompt: { pa: pPa, rom: pRom, en: pEn }, reply: { pa: rPa, rom: rRom, en: rEn },
+      focus: focus.map(resolve).filter(Boolean), wrong: (wrong || []).map(([pa, rom, en]) => ({ pa, rom, en })) };
+    conversations.push(c);
+    c.focus.forEach(id => (convByFocus[id] = convByFocus[id] || []).push(c));
+  });
+
+  window.MODEL = { items, order, lessons, slug, sentences, sentByFocus, conversations, convByFocus, glossary: SB.glossary || {} };
 })();

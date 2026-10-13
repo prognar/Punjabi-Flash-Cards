@@ -94,7 +94,7 @@
 
   /** Record an answer. Box can climb at most one step per calendar day (two on the first day),
    *  so "mastered" always means remembered across separate days. */
-  function record(pr, id, ok, ex, isReview) {
+  function record(pr, id, ok, ex, isReview, opts = {}) {
     const s = st(pr, id), t = now(), today = dayKey(t);
     s.intro = true; s.seen++; s.last = t;
     if (ok) {
@@ -109,7 +109,8 @@
       if (!s.everMastered && isMastered(pr, id)) s.everMastered = true; // counts toward unlocking even if it slips later (review keeps it alive)
     } else {
       s.wrong++; s.streak = 0;
-      s.box = s.box >= 4 ? 2 : Math.max(0, s.box - 1);
+      // a slip on a repeat card within the same session (reinforcement / retry) costs less than a fresh miss
+      s.box = opts.soft ? Math.max(Math.min(s.box, 1), s.box - 1) : (s.box >= 4 ? 2 : Math.max(0, s.box - 1));
       s.due = t; s.lastWrong = t;
     }
     pr.history.push({ t, id, ok: !!ok, ex, r: !!isReview });
@@ -205,10 +206,16 @@
       if (set.writing !== false && flip) return 'write';
       return item.words.length ? 'word-letter' : 'name-letter';
     }
-    if (b <= 0) return 'mc-en2pa';
-    if (b === 1) return flip ? 'mc-pa2en' : 'mc-en2pa';
-    if (item.kind === 'phrase' && multiWord(item) && b >= 3 && flip) return 'build';
-    return 'say';
+    // words & phrases: mix of recognition, sentences in context, conversation replies and producing it
+    const sent = !!opts.sent, conv = !!opts.conv;
+    let pool;
+    if (b <= 0) pool = ['mc-en2pa', 'mc-en2pa'].concat(sent ? ['fill'] : []);
+    else if (b === 1) pool = ['mc-pa2en', 'listen'].concat(sent ? ['fill', 'fill'] : ['mc-en2pa'], conv ? ['respond'] : []);
+    else if (b === 2) pool = ['listen', 'mc-pa2en'].concat(sent ? ['tiles-pa2en', 'fill', 'tiles-pa2en'] : ['say'], conv ? ['respond', 'respond'] : []);
+    else pool = ['say'].concat(sent ? ['tiles-en2pa', 'tiles-en2pa', 'tiles-pa2en'] : ['mc-pa2en'], conv ? ['respond', 'respond'] : [],
+      item.kind === 'phrase' && multiWord(item) ? ['build'] : []);
+    if (opts.not) { const f = pool.filter(x => x !== opts.not); if (f.length) pool = f; }
+    return pool[Math.floor(Math.random() * pool.length)];
   }
   /** Easier exercise used when re-asking a missed item later in the same session. */
   function retryExercise(item) { return item.kind === 'letter' ? 'pick-letter' : 'mc-en2pa'; }
@@ -279,7 +286,9 @@
     }
 
     // --- assemble: interleave review between current items, new item quiz 2–3 cards after its intro
-    const mk = (id, review, ex) => ({ id, ex: ex || chooseExercise(model.items[id], peek(pr, id), profile, { salt: Math.floor(Math.random() * 2) }), review });
+    const availFor = id => ({ sent: !!(model.sentByFocus && model.sentByFocus[id]), conv: !!(model.convByFocus && model.convByFocus[id]) });
+    const exFor = (id, st, not) => chooseExercise(model.items[id], st, profile, Object.assign({ salt: Math.floor(Math.random() * 2), not }, availFor(id)));
+    const mk = (id, review, ex) => ({ id, ex: ex || exFor(id, peek(pr, id)), review });
     const main = [];
     const cq = currentIds.map(id => mk(id, false));
     const rq = reviewIds.map(id => mk(id, true));
@@ -297,12 +306,40 @@
         queue.push({ id, ex: 'intro', review: false });
         const before = main.slice(mi, mi + Math.min(2, gap)); mi += before.length;
         queue = queue.concat(before);
-        queue.push({ id, ex: chooseExercise(model.items[id], { intro: true, box: 0, seen: 0, writes: 0 }, profile), review: false });
+        queue.push({ id, ex: model.items[id].kind === 'letter' ? chooseExercise(model.items[id], { intro: true, box: 0, seen: 0, writes: 0 }, profile) : 'mc-en2pa', review: false });
         const after = main.slice(mi, mi + Math.max(0, gap - 2)); mi += after.length;
         queue = queue.concat(after);
       });
       queue = queue.concat(main.slice(mi));
     } else queue = main;
+
+    // --- reinforcement: words being learned come back again later in the session, in a different kind of exercise
+    if (scope !== 'review') {
+      const focus = newIds.concat(currentIds).filter(id => model.items[id].kind !== 'letter' || set.writing !== false || true);
+      const extra = Math.max(2, Math.round(size * 0.5));
+      focus.slice(0, extra).forEach(id => {
+        const it = model.items[id];
+        const lastIdx = queue.map(c => c.id).lastIndexOf(id);
+        if (lastIdx < 0) return;
+        const prev = queue[lastIdx].ex;
+        const st = Object.assign({ intro: true, box: 0, seen: 0, writes: 99 }, peek(pr, id) || {});
+        if (newIds.includes(id)) st.box = 1; // second look at a brand-new word: one step harder than the first quiz
+        st.writes = 99; // don't stack two tracing cards
+        const ex = it.kind === 'letter' ? (prev === 'pick-letter' ? 'name-letter' : 'pick-letter') : exFor(id, st, prev);
+        const at = Math.min(queue.length, lastIdx + 4 + Math.floor(Math.random() * 3));
+        queue.splice(at, 0, { id, ex, review: false, reinforce: true });
+      });
+      // --- one "match the pairs" round with words/phrases already met
+      const pairPool = queue.filter(c => model.items[c.id].kind !== 'letter').map(c => c.id)
+        .filter((id, i, a) => a.indexOf(id) === i && model.items[id].en.length <= 28);
+      const known = pairPool.filter(id => (peek(pr, id) || {}).intro || newIds.includes(id));
+      if (known.length >= 4) {
+        const ids = known.slice(0, 5);
+        // place it after the last intro of those words
+        const after = Math.max(...ids.map(id => queue.findIndex(c => c.id === id && c.ex !== 'intro')));
+        queue.splice(Math.min(queue.length, Math.max(after + 1, Math.floor(queue.length * 0.6))), 0, { id: ids[0], ids, ex: 'match', review: false });
+      }
+    }
 
     return {
       queue,
