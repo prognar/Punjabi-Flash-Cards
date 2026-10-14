@@ -20,7 +20,10 @@
   function paHTML(it, cls = '') {
     return `<div class="pa ${cls}">${setG() ? `<span class="gur" lang="pa">${esc(it.pa)}</span>` : ''}${setR() ? `<span class="rom">${esc(it.rom)}</span>` : ''}</div>`;
   }
-  function speak(it) { S.say({ pa: it.kind === 'letter' ? it.name : it.paAnswers[0], rom: it.rom }, { rate: isKid() ? 0.72 : 0.85 }); }
+  function speak(it) {
+    S.say({ pa: it.kind === 'letter' ? it.name : it.paAnswers[0], rom: it.rom, audio: it.audio, speakAs: it.speakAs, voice: it.voice, rate: it.rate },
+      { rate: isKid() ? 0.72 : 0.85 });
+  }
   const praise = () => (isKid() ? ['Shabaash! 🎉', 'Great job! ⭐', 'Wah! 🌟', 'You got it! 🙌', 'Bahut vadia! 💪'] : ['Correct', 'Nice', 'Shabaash!', 'Right']).sort(() => Math.random() - .5)[0];
   const encourage = () => (isKid() ? ['Almost! Let\'s look again 👀', 'Good try! 💛', 'Nice try — here it is:'] : ['Not quite —', 'Here\'s the answer:']).sort(() => Math.random() - .5)[0];
   function confetti() {
@@ -769,6 +772,7 @@
       </div>
       <div class="card stack" style="margin-top:14px">
         <h3>Content</h3>
+        <div class="row wrap"><a class="btn" href="admin.html">🛠 Admin: add &amp; edit words</a></div>
         <p class="small">${order.letter.length} letters · ${order.vocab.length} words · ${order.phrase.length} phrases · ${lessons.length} lessons.
         ${Object.values(items).filter(i => i.check).length} cards are flagged “ask teacher”; ${Object.values(items).filter(i => i.src === 'generated').length} words were added beyond the teacher's list.</p>
       </div>`;
