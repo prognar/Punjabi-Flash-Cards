@@ -171,19 +171,101 @@
     if (pickVoice('hi')) return 'hi';
     return 'en';
   }
-  /** speak({pa, rom}, {rate}) */
+  let current = null;
+  /**
+   * speak({pa, rom, audio, speakAs, voice, rate}, {rate})
+   *   audio   — URL of a recorded clip (always wins)
+   *   speakAs — alternative text for the voice to read (Gurmukhi or English-letters)
+   *   voice   — 'auto' | 'pa' | 'hi' | 'en' to force which voice reads it
+   */
   function say(text, opts = {}) {
+    if (current && current.pause) { try { current.pause(); } catch (e) {} current = null; }
+    if (text.audio && root.Audio) {
+      try { if (root.speechSynthesis) root.speechSynthesis.cancel(); } catch (e) {}
+      const a = new root.Audio(text.audio); current = a;
+      a.play().catch(() => { current = null; const t = Object.assign({}, text); delete t.audio; say(t, opts); });
+      return true;
+    }
     if (!root.speechSynthesis) return false;
     const synth = root.speechSynthesis; synth.cancel();
-    const mode = ttsMode();
+    const auto = ttsMode();
+    let mode = text.voice && text.voice !== 'auto' ? text.voice : auto;
+    if (mode === 'pa' && !pickVoice('pa')) mode = auto;
+    if (mode === 'hi' && !pickVoice('hi')) mode = auto === 'pa' ? 'pa' : 'en';
+    const src = text.speakAs || text.pa || '';
+    const isGur = /[਀-੿]/.test(src);
     let u;
-    if (mode === 'pa') { u = new SpeechSynthesisUtterance(text.pa); u.voice = pickVoice('pa'); u.lang = u.voice.lang; }
-    else if (mode === 'hi') { u = new SpeechSynthesisUtterance(gurToDeva(text.pa)); u.voice = pickVoice('hi'); u.lang = u.voice.lang; }
-    else { u = new SpeechSynthesisUtterance((text.rom || '').replace(/\(n\)/g, 'n').replace(/-/g, '').split(' / ')[0]); u.lang = 'en-US'; }
-    u.rate = opts.rate || 0.8;
+    if (mode === 'pa' && isGur) { u = new SpeechSynthesisUtterance(src); u.voice = pickVoice('pa'); u.lang = u.voice.lang; }
+    else if ((mode === 'hi' || mode === 'pa') && isGur) { u = new SpeechSynthesisUtterance(gurToDeva(src)); u.voice = pickVoice('hi') || pickVoice('pa'); if (u.voice) u.lang = u.voice.lang; }
+    else {
+      const en = (text.speakAs && !isGur ? text.speakAs : (text.rom || '')).replace(/\(n\)/g, 'n').replace(/-/g, '').split(' / ')[0];
+      u = new SpeechSynthesisUtterance(en); const v = pickVoice('en'); if (v) u.voice = v; u.lang = 'en-US';
+    }
+    u.rate = text.rate || opts.rate || 0.8;
     synth.speak(u);
     return true;
   }
+  function voiceInfo() {
+    loadVoices();
+    return { pa: (pickVoice('pa') || {}).name || null, hi: (pickVoice('hi') || {}).name || null, en: (pickVoice('en') || {}).name || null, auto: ttsMode() };
+  }
 
-  root.SPEECH = { available: !!SR, listen, stop, say, ttsMode, key, gurToLatin, gurToDeva, scoreHeard, sim, state };
+  /**
+   * Gurmukhi → English-letters "sounds-like" spelling in the teacher's style (syllables split by hyphens),
+   * e.g. ਕੁੱਤਾ → kut-taa, ਪਾਣੀ → paa-nee, ਗੇਂਦ → gaind, ਬਾਂਹ → baan(h)
+   */
+  const AV = { 'ਾ': 'aa', 'ਿ': 'i', 'ੀ': 'ee', 'ੁ': 'u', 'ੂ': 'oo', 'ੇ': 'ay', 'ੈ': 'ai', 'ੋ': 'o', 'ੌ': 'au' };
+  const AVI = { 'ਅ': 'a', 'ਆ': 'aa', 'ਇ': 'i', 'ਈ': 'ee', 'ਉ': 'u', 'ਊ': 'oo', 'ਏ': 'ay', 'ਐ': 'ai', 'ਓ': 'o', 'ਔ': 'au', 'ੳ': 'u', 'ੲ': 'i' };
+  const AC = Object.assign({}, CONS, { 'ਟ': 't', 'ਤ': 't', 'ਡ': 'd', 'ਦ': 'd', 'ੜ': 'r', 'ਣ': 'n' });
+  function anglicizeWord(w) {
+    const ch = Array.from(w.normalize('NFC'));
+    const syl = []; // {c: consonants, v: vowel}
+    let cur = { c: '', v: '' }, dbl = false;
+    const flush = () => { syl.push(cur); cur = { c: '', v: '' }; };
+    for (let i = 0; i < ch.length; i++) {
+      const c = ch[i], nx = ch[i + 1];
+      if (AC[c]) {
+        let b = AC[c];
+        if (nx === '਼') { b = NUKTA[c] || b; i++; }
+        if (cur.v) flush();
+        if (dbl) { // addak: close previous syllable with this consonant (ਬੱਚਾ → buch-chaa)
+          if (syl.length) syl[syl.length - 1].coda = (syl[syl.length - 1].coda || '') + (b === 'chh' ? 'ch' : b.length > 1 && b.endsWith('h') ? b.slice(0, -1) : b);
+          dbl = false;
+        }
+        cur.c += b;
+        const after = ch[i + 1];
+        if (after === '੍') { i++; continue; }            // cluster
+        if (!(after && (AV[after] || after === 'ੱ' || after === 'ੰ' || after === 'ਂ'))) cur.v = 'a';   // inherent vowel
+      } else if (AVI[c]) { if (cur.v || cur.c) flush(); cur.v = AVI[c]; cur.ind = true; }
+      else if (AV[c]) cur.v = AV[c];
+      else if (c === 'ੰ' || c === 'ਂ') { if (!cur.v) cur.v = 'u'; cur.nas = true; }
+      else if (c === 'ੱ') { if (!cur.v) cur.v = 'u'; dbl = true; }
+    }
+    if (cur.c || cur.v) flush();
+    // drop the inherent vowel at the end of the word (ਘਰ → ghar)
+    if (syl.length > 1) { const L = syl[syl.length - 1]; if (L.v === 'a' && !L.nas && !L.coda) { const P = syl[syl.length - 2]; P.coda = (P.coda || '') + L.c; syl.pop(); } }
+    else if (syl.length === 1 && syl[0].v === 'a' && syl[0].c && w.length > 1) { /* single syllable like ਘਰ handled above */ }
+    // Punjabi drops the short "a" in the middle of a word: ਕੁਰਸੀ is kur-see, not ku-ra-see
+    for (let i = 1; i < syl.length - 1; i++) {
+      const x = syl[i];
+      if (x.v === 'a' && !x.nas && !x.coda && !x.ind && x.c && syl[i - 1].v && syl[i + 1].v && syl[i + 1].c && !syl[i - 1].sync) {
+        syl[i - 1].coda = (syl[i - 1].coda || '') + x.c; syl[i - 1].sync = true; syl.splice(i, 1); i--;
+      }
+    }
+    const parts = syl.map(x => {
+      let v = x.v === 'a' && !x.ind ? 'u' : x.v;       // schwa sounds like the u in "cup"
+      let s = x.c + v;
+      if (x.nas) s += (/aa|ee|oo|ai|au|ay|o$/.test(v) && !x.coda ? '(n)' : 'n');
+      return s + (x.coda || '');
+    });
+    // merge a syllable that is only consonants into its neighbour
+    const out = [];
+    parts.forEach(p => { if (out.length && !/[aeiou]/.test(p)) out[out.length - 1] += p; else out.push(p); });
+    return out.join('-').replace(/u-hi([^aeiou(-]*)/g, 'eh$1').replace(/ih(?=-)/g, 'eh').replace(/^-|-$/g, '').replace(/--+/g, '-');
+  }
+  function anglicize(s) {
+    return (s || '').split(' / ').map(alt => alt.replace(/[?,.!।]/g, '').trim().split(/\s+/).filter(Boolean).map(anglicizeWord).join(' ')).join(' / ');
+  }
+
+  root.SPEECH = { available: !!SR, listen, stop, say, ttsMode, voiceInfo, key, gurToLatin, gurToDeva, anglicize, scoreHeard, sim, state };
 })(typeof window !== 'undefined' ? window : globalThis);

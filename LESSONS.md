@@ -52,6 +52,21 @@ Lesson sizes are set in `perLesson` in `data/content.js`.
 - **Coverage**: about 130 of 150 words and 84 of 104 phrases have sentences; the rest use the flash-card style exercises.
 - **All sentence Punjabi was written for the app** — have the teacher check it.
 
+## Admin console (admin.html)
+Open it from **Backup & settings → Admin**, or go to `/admin.html`.
+- **Add or edit words and phrases**: English, Gurmukhi (there's an on-screen ⌨ keyboard and a Google Translate link), sounds-like spelling, other accepted answers, a note for the card, and whether the teacher has checked it. You can also hide a card.
+- **Sounds-like**: leave it empty and it's filled in from the Gurmukhi, or press "Use this" on the suggestion.
+- **Where new cards go**: by default into the next class slot, after the teacher's latest card and before the generated filler words. You can also pick a spot.
+- **How it sounds**:
+  - Play it the way learners will hear it.
+  - **Record your own voice**. A recording is used for everyone and is the surest fix.
+  - Or tune the computer voice: force Punjabi, Hindi or English, change the speed, or give the voice a different spelling to read ("Say it as").
+- **Letters**: you can fix each letter's sounds-like name, sound hint and pronunciation.
+- **Draft and preview**: changes stay as a draft in that browser. Tick "Preview…" to see them in the app on that device.
+- **Publish**: writes `data/custom.js` (plus any recordings into `data/audio/`) to GitHub using a fine-grained token with Contents: read & write on this repo. The token is stored only in that browser. Everyone sees the changes once the site updates.
+- **No token?** "Download custom.js" lets you replace the file by hand. Recordings can only be published with the token.
+- **Learner progress is safe**: it's tied to each card's id, so editing a card's English doesn't reset anyone's progress on it.
+
 ## Exercises
 | | New | Learning | Stronger |
 |---|---|---|---|

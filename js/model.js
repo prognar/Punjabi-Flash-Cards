@@ -8,30 +8,64 @@
   const items = {};
   const order = { letter: [], vocab: [], phrase: [] };
 
+  // Admin edits (data/custom.js). On the admin's own device an unpublished draft can be previewed.
+  let CU = window.CUSTOM || {};
+  try {
+    const draft = window.localStorage && localStorage.getItem('pfc.admin.draft');
+    if (draft && (localStorage.getItem('pfc.admin.preview') === '1' || /admin\.html/.test(location.pathname))) CU = JSON.parse(draft);
+  } catch (e) {}
+  const patches = CU.items || {};
+  const PRON = ['speakAs', 'audio', 'rate', 'voice'];
+
   C.letters.forEach(([glyph, name, nameRom, sound, words], i) => {
     const id = 'l' + (i + 1);
+    const pt = patches[id] || {};
+    const rom = pt.rom || nameRom;
     items[id] = {
       id, kind: 'letter', index: i,
-      glyph, pa: glyph, paAnswers: [glyph, name], name, rom: nameRom, romAnswers: splitAlts(nameRom.replace(/\(.*?\)/g, '')),
-      en: 'letter ' + nameRom.replace(/\s*\(.*?\)/, ''), sound,
+      glyph, pa: glyph, paAnswers: [glyph, name], name, rom, romAnswers: splitAlts(rom.replace(/\(.*?\)/g, '')),
+      en: 'letter ' + rom.replace(/\s*\(.*?\)/, ''), sound: pt.sound || sound,
       words: words.map(([pa, rom, en, emoji]) => ({ pa, rom, en, emoji })),
-      src: 'teacher'
+      src: 'teacher', edited: !!patches[id]
     };
+    PRON.forEach(k => { if (pt[k] != null && pt[k] !== '') items[id][k] = pt[k]; });
     order.letter.push(id);
   });
 
+  function makeItem(id, kind, en, pa, rom, opt, origEn) {
+    const paAnswers = splitAlts(pa).concat(opt.alt || []);
+    const it = {
+      id, kind, en, origEn: origEn || en, pa, rom, paAnswers, romAnswers: splitAlts(rom),
+      note: opt.note || '', check: opt.check || '', src: opt.src || 'teacher', group: opt.group || '',
+      verified: !!opt.verified, edited: !!opt.edited
+    };
+    PRON.forEach(k => { if (opt[k] != null && opt[k] !== '') it[k] = opt[k]; });
+    return it;
+  }
   function addRows(rows, kind, prefix) {
     const seen = {};
+    const list = [];
     rows.forEach(([en, pa, rom, opt = {}]) => {
       let id = prefix + slug(en);
       if (seen[id]) id += '-' + (++seen[id]); else seen[id] = 1;
-      const paAnswers = splitAlts(pa).concat(opt.alt || []);
-      items[id] = {
-        id, kind, en, pa, rom, paAnswers, romAnswers: splitAlts(rom),
-        note: opt.note || '', check: opt.check || '', src: opt.src || 'teacher', group: opt.group || ''
-      };
-      order[kind].push(id);
+      const pt = patches[id];
+      const o = Object.assign({}, opt, pt || {}, pt ? { edited: true } : {});
+      const it = makeItem(id, kind, (pt && pt.en) || en, (pt && pt.pa) || pa, (pt && pt.rom) || rom, o, en);
+      it.base = { en, pa, rom, opt };
+      if (pt && pt.hidden) { it.hidden = true; items[id] = it; return; } // kept for the admin console, left out of lessons
+      list.push(it);
     });
+    // admin-added cards: placed after a given card, or after the last teacher/admin card (ahead of generated filler)
+    (CU.added || []).filter(a => a.kind === kind).forEach(a => {
+      const pt = Object.assign({}, a, patches[a.id] || {});
+      const it = makeItem(a.id, kind, pt.en, pt.pa, pt.rom, Object.assign({ src: 'admin', edited: true }, pt));
+      it.added = true;
+      if (pt.hidden) { it.hidden = true; items[it.id] = it; return; }
+      let at = a.after ? list.findIndex(x => x.id === a.after) + 1 : 0;
+      if (!a.after || at === 0) { let last = -1; list.forEach((x, i) => { if (x.src !== 'generated') last = i; }); at = last + 1; }
+      list.splice(at, 0, it);
+    });
+    list.forEach(it => { items[it.id] = it; order[kind].push(it.id); });
   }
   addRows(C.vocab, 'vocab', 'v-');
   addRows(C.phrases, 'phrase', 'p-');
@@ -59,7 +93,7 @@
   function resolve(ref) {
     const [k, ...rest] = ref.split(':'); const en = norm(rest.join(':'));
     const kind = k === 'v' ? 'vocab' : 'phrase';
-    let id = order[kind].find(i => norm(items[i].en) === en) || order[kind].find(i => norm(items[i].en).startsWith(en));
+    let id = order[kind].find(i => norm(items[i].origEn) === en || norm(items[i].en) === en) || order[kind].find(i => norm(items[i].origEn).startsWith(en));
     if (!id && typeof console !== 'undefined') console.warn('sentence ref not found:', ref);
     return id || null;
   }
@@ -74,7 +108,7 @@
   });
   const clsOf = {};
   Object.entries(SB.classes).forEach(([cls, words]) => words.forEach(w => {
-    const id = order.vocab.find(i => norm(items[i].en.replace(/\s*\(.*?\)/, '')) === w);
+    const id = order.vocab.find(i => norm(items[i].origEn.replace(/\s*\(.*?\)/, '')) === w);
     if (id) { items[id].cls = cls; clsOf[id] = cls; }
   }));
   SB.templates.forEach(T => {
@@ -113,5 +147,5 @@
     c.focus.forEach(id => (convByFocus[id] = convByFocus[id] || []).push(c));
   });
 
-  window.MODEL = { items, order, lessons, slug, sentences, sentByFocus, conversations, convByFocus, glossary: SB.glossary || {} };
+  window.MODEL = { items, order, lessons, slug, custom: CU, sentences, sentByFocus, conversations, convByFocus, glossary: SB.glossary || {} };
 })();
