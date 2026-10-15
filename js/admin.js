@@ -558,7 +558,9 @@ window.CUSTOM = ${JSON.stringify(obj, null, 2)};
         Punjabi voice: ${esc(info.pa || 'none')} · Hindi voice: ${esc(info.hi || 'none')} · English voice: ${esc(info.en || 'none')}<br>
         ${info.bad && info.bad.length ? `Voices that failed and are now skipped: ${esc(info.bad.join(', '))}<br>` : ''}
         Can play recordings: WAV ${fmt('audio/wav')} · WebM ${fmt('audio/webm')} · M4A ${fmt('audio/mp4')}<br>
-        Last sound result: ${last ? esc(last.kind + (last.detail ? ' — ' + last.detail : '')) : 'nothing reported (if you heard nothing, check the volume and the silent switch)'}`);
+        Last sound result: ${last ? esc(last.kind + (last.detail ? ' — ' + last.detail : '')) : 'nothing reported (if you heard nothing, check the volume and the silent switch)'}<br>
+        Attempts: ${esc((S.sound.log || []).slice(-6).join(' → ') || 'none')}<br>
+        Browser: ${esc(navigator.userAgent)}<br>App version: ${esc(window.APP_VERSION || '?')}`);
     }, 1500);
   }
   function alertBox(html) {

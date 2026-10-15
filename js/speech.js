@@ -193,7 +193,7 @@
     S_state.last = { kind, detail, at: Date.now() };
     try { root.dispatchEvent(new CustomEvent('pfc-sound', { detail: S_state.last })); } catch (e) {}
   };
-  const S_state = { last: null };
+  const S_state = { last: null, log: [] };
   /**
    * speak({pa, rom, audio, speakAs, voice, rate}, {rate})
    *   audio   — URL of a recorded clip (always wins)
@@ -245,9 +245,12 @@
       u.lang = (t.voice && t.voice.lang) || t.lang;
       u.rate = rate;
       let started = false;
-      u.onstart = () => { started = true; report('ok', (t.voice && t.voice.name) || u.lang); };
+      const tag = ((t.voice && t.voice.name) || 'phone default') + ' [' + u.lang + ']';
+      S_state.log.push(tag + ': trying'); if (S_state.log.length > 12) S_state.log.shift();
+      u.onstart = () => { started = true; S_state.log.push(tag + ': ✓ playing'); report('ok', tag); };
       u.onerror = e => {
         if (e.error === 'interrupted' || e.error === 'canceled') return;
+        S_state.log.push(tag + ': ✗ ' + e.error);
         if (t.voice && /synthesis|voice|language/.test(e.error || '')) badVoices.add(t.voice.voiceURI || t.voice.name);
         if (!started && i + 1 < tries.length) { try { synth.cancel(); } catch (x) {} setTimeout(() => attempt(i + 1), 60); }
         else report('tts-error', e.error);
