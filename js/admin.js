@@ -17,12 +17,54 @@
   };
   const K_DRAFT = 'pfc.admin.draft', K_GH = 'pfc.admin.gh', K_PREVIEW = 'pfc.admin.preview';
   const BASE = JSON.parse(JSON.stringify(window.CUSTOM || { version: 1, items: {}, added: [] }));
-  let draft = LS.get(K_DRAFT, null) || JSON.parse(JSON.stringify(BASE));
+  const clone = o => JSON.parse(JSON.stringify(o));
+  // --- drafts are "my changes on top of what was published"; rebased whenever the published file moves on
+  function changesOf(d, base) {
+    const ch = { items: {}, added: {} };
+    const bi = (base && base.items) || {}, di = d.items || {};
+    new Set(Object.keys(di).concat(Object.keys(bi))).forEach(id => {
+      if (JSON.stringify(di[id] || null) !== JSON.stringify(bi[id] || null)) ch.items[id] = di[id] ? clone(di[id]) : null;
+    });
+    const ba = {}; ((base && base.added) || []).forEach(a => { ba[a.id] = a; });
+    (d.added || []).forEach(a => { if (JSON.stringify(a) !== JSON.stringify(ba[a.id] || null)) ch.added[a.id] = clone(a); });
+    Object.keys(ba).forEach(id => { if (!(d.added || []).find(x => x.id === id)) ch.added[id] = null; });
+    return ch;
+  }
+  function applyChanges(target, ch) {
+    const t = clone(target); t.items = t.items || {}; t.added = t.added || [];
+    Object.entries(ch.items).forEach(([id, v]) => { if (v) t.items[id] = v; else delete t.items[id]; });
+    Object.entries(ch.added).forEach(([id, v]) => {
+      const i = t.added.findIndex(a => a.id === id);
+      if (!v) { if (i >= 0) t.added.splice(i, 1); } else if (i >= 0) t.added[i] = v; else t.added.push(v);
+    });
+    return t;
+  }
+  const stripBase = d => { const o = clone(d); delete o.__base; return o; };
+  let draft = LS.get(K_DRAFT, null);
+  if (!draft) draft = Object.assign(clone(BASE), { __base: clone(BASE) });
+  else {
+    // rebase onto the currently published file so changes published from another device aren't lost
+    const mine = changesOf(draft, draft.__base || BASE);
+    draft = Object.assign(applyChanges(BASE, mine), { __base: clone(BASE) });
+  }
   draft.items = draft.items || {}; draft.added = draft.added || [];
+  if (LS.raw(K_DRAFT) !== JSON.stringify(draft)) {
+    const had = LS.raw(K_DRAFT);
+    LS.set(K_DRAFT, draft);
+    // the card list was built from the old draft — rebuild once with the rebased one
+    if (had && JSON.stringify(JSON.parse(had).items) + JSON.stringify(JSON.parse(had).added) !== JSON.stringify(draft.items) + JSON.stringify(draft.added)) { location.reload(); return; }
+  }
   const gh = Object.assign({ owner: 'prognar', repo: 'Punjabi-Flash-Cards', branch: 'main', token: '' }, LS.get(K_GH, {}));
+  // "setup link" from another device: admin.html#setup=<base64 json> → save, then scrub it from the address bar
+  (() => {
+    const m = /[#&]setup=([^&]+)/.exec(location.hash);
+    if (!m) return;
+    try { const cfg = JSON.parse(decodeURIComponent(escape(atob(decodeURIComponent(m[1]))))); Object.assign(gh, cfg); LS.set(K_GH, gh); setTimeout(() => toast('Publishing is set up on this device ✓'), 300); } catch (e) { setTimeout(() => toast('That setup link is broken'), 300); }
+    history.replaceState(null, '', location.pathname);
+  })();
 
   const KIND_LABEL = { vocab: 'Words', phrase: 'Phrases', letter: 'Letters' };
-  const state = Object.assign({ tab: 'vocab', q: '', filter: 'all' }, (() => { try { return JSON.parse(decodeURIComponent(location.hash.slice(1)) || '{}'); } catch (e) { return {}; } })());
+  const state = Object.assign({ tab: 'vocab', q: '', filter: 'all' }, (() => { try { return /setup=/.test(location.hash) ? {} : JSON.parse(decodeURIComponent(location.hash.slice(1)) || '{}'); } catch (e) { return {}; } })());
 
   // ------------------------------------------------------------------ helpers
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -30,13 +72,8 @@
   const saveDraft = () => LS.set(K_DRAFT, draft);
   const stable = o => JSON.stringify(o, Object.keys(o || {}).sort());
   function pendingIds() {
-    const ids = new Set();
-    const all = new Set(Object.keys(draft.items).concat(Object.keys(BASE.items || {})));
-    all.forEach(id => { if (JSON.stringify(draft.items[id] || null) !== JSON.stringify((BASE.items || {})[id] || null)) ids.add(id); });
-    const ba = {}; (BASE.added || []).forEach(a => { ba[a.id] = a; });
-    draft.added.forEach(a => { if (JSON.stringify(a) !== JSON.stringify(ba[a.id] || null)) ids.add(a.id); });
-    (BASE.added || []).forEach(a => { if (!draft.added.find(x => x.id === a.id)) ids.add(a.id); });
-    return [...ids];
+    const ch = changesOf(draft, draft.__base || BASE);
+    return [...new Set(Object.keys(ch.items).concat(Object.keys(ch.added)))];
   }
   function reloadKeeping(extra = {}) {
     location.hash = encodeURIComponent(JSON.stringify(Object.assign({ tab: state.tab, q: state.q, filter: state.filter }, extra)));
@@ -82,8 +119,9 @@
         <div><h1>Admin</h1><div class="muted small">Add and fix words, phrases and how they sound.</div></div>
         <span class="spacer"></span>
         <div class="publish-box">
-          <div class="small ${pend.length ? 'pending' : 'muted'}">${pend.length ? `${pend.length} unpublished change${pend.length > 1 ? 's' : ''}` : 'Everything is published'}</div>
-          <button class="btn primary" data-a="publish" ${pend.length ? '' : 'disabled'}>⬆ Publish</button>
+          <div class="small ${pend.length ? 'pending' : 'muted'}">${pend.length ? `${pend.length} unpublished change${pend.length > 1 ? 's' : ''} <span class="muted">(saved on this device only)</span>` : 'Everything is published'}</div>
+          ${gh.token ? `<button class="btn primary" data-a="publish" ${pend.length ? '' : 'disabled'}>⬆ Publish</button>`
+            : `<button class="btn primary" data-a="setup">🔑 Set up publishing</button>`}
         </div>
       </header>
 
@@ -101,7 +139,9 @@
           <label class="field"><span>Branch</span><input class="input" id="ghBranch" value="${esc(gh.branch)}"></label>
           <label class="field wide"><span>Token</span><input class="input" id="ghToken" type="password" autocomplete="off" placeholder="github_pat_…" value="${esc(gh.token)}"></label>
         </div>
-        <div class="row wrap"><button class="btn teal" data-a="ghsave">Save &amp; test</button><button class="btn ghost" data-a="ghforget">Forget token</button>
+        <p class="small muted">The token is remembered per browser — set it up once on each phone or computer you publish from.
+          ${gh.token ? 'To set up another device quickly, copy the setup link below and open it there (send it only to yourself — it contains the token).' : ''}</p>
+        <div class="row wrap"><button class="btn teal" data-a="ghsave">Save &amp; test</button>${gh.token ? '<button class="btn" data-a="setuplink">📱 Copy setup link for another device</button>' : ''}<button class="btn ghost" data-a="ghforget">Forget token</button>
           <button class="btn ghost" data-a="download">⬇ Download custom.js instead</button></div>
       </details>
 
@@ -116,7 +156,8 @@
       </div>
       <div class="row wrap small muted" style="margin:6px 2px 10px">
         <span>${list.length} shown</span><span>·</span>
-        <span>Voices on this device: ${vi.pa ? 'Punjabi ✓' : 'Punjabi ✗'}, ${vi.hi ? 'Hindi ✓' : 'Hindi ✗'}, English ✓ — other people's devices may differ, so <b>recording</b> is the surest fix.</span>
+        <span>Voices on this device: ${vi.pa ? 'Punjabi ✓' : 'Punjabi ✗'}, ${vi.hi ? 'Hindi ✓' : 'Hindi ✗'}, ${vi.en ? 'English ✓' : 'English ?'} — other people's devices may differ, so <b>recording</b> is the surest fix.</span>
+        <button class="btn ghost" data-a="soundcheck">🔊 Sound check</button>
         <span class="spacer"></span>
         <label class="row" style="gap:6px"><input type="checkbox" id="preview" ${preview ? 'checked' : ''}> Preview unpublished changes in the app on this device</label>
       </div>
@@ -147,6 +188,13 @@
       const a = t.closest('[data-a]'); if (!a) return;
       if (a.dataset.a === 'add') openEditor(null);
       if (a.dataset.a === 'publish') publish();
+      if (a.dataset.a === 'setup') { const d = document.querySelector('details.gh'); d.open = true; d.scrollIntoView({ behavior: 'smooth' }); setTimeout(() => document.getElementById('ghToken').focus(), 400); }
+      if (a.dataset.a === 'setuplink') {
+        const link = location.origin + location.pathname + '#setup=' + encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify({ owner: gh.owner, repo: gh.repo, branch: gh.branch, token: gh.token })))));
+        (navigator.clipboard ? navigator.clipboard.writeText(link) : Promise.reject()).then(() => toast('Setup link copied — open it on your phone (keep it private)', 4500))
+          .catch(() => { prompt('Copy this link and open it on the other device (keep it private):', link); });
+      }
+      if (a.dataset.a === 'soundcheck') soundCheck();
       if (a.dataset.a === 'download') download();
       if (a.dataset.a === 'ghsave') ghSave();
       if (a.dataset.a === 'ghforget') { gh.token = ''; LS.set(K_GH, gh); toast('Token removed from this browser'); render(); }
@@ -300,10 +348,10 @@
             stream.getTracks().forEach(t => t.stop());
             const blob = new Blob(chunks, { type: rec.mimeType || 'audio/webm' });
             rec = null;
-            if (blob.size > 400 * 1024) { toast('That recording is too long — keep it under ~10 seconds'); draw(); return; }
-            const fr = new FileReader();
-            fr.onload = () => { w.audio = fr.result; draw(); S.say({ audio: w.audio, pa: '' }); };
-            fr.readAsDataURL(blob);
+            toWavDataUrl(blob).then(url => {
+              if (url.length > 900 * 1024) { toast('That recording is too long — keep it under ~10 seconds'); draw(); return; }
+              w.audio = url; draw(); toast('Recorded ✓ — tap ▶ Play recording to check it');
+            });
           };
           rec.start(); draw();
           setTimeout(() => { if (rec && rec.state === 'recording') rec.stop(); }, 12000);
@@ -370,6 +418,44 @@
       }
     });
   }
+  /**
+   * Any recording → small mono 16 kHz WAV with the silence trimmed off both ends.
+   * WAV plays on every phone and browser (Chrome records WebM, which older iPhones can't play).
+   */
+  async function toWavDataUrl(blob) {
+    const blobToDataUrl = b => new Promise(res => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.readAsDataURL(b); });
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      const ac = new AC();
+      const ab = await (blob.arrayBuffer ? blob.arrayBuffer() : new Response(blob).arrayBuffer());
+      const buf = await new Promise((res, rej) => { const p = ac.decodeAudioData(ab, res, rej); if (p && p.catch) p.catch(rej); });
+      ac.close && ac.close();
+      const RATE = 16000;
+      const off = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(1, Math.max(1, Math.ceil(buf.duration * RATE)), RATE);
+      const src = off.createBufferSource(); src.buffer = buf; src.connect(off.destination); src.start();
+      const out = await off.startRendering();
+      let d = out.getChannelData(0);
+      // trim silence (keep 0.12 s of padding)
+      let peak = 0; for (let i = 0; i < d.length; i++) peak = Math.max(peak, Math.abs(d[i]));
+      const th = Math.max(0.02, peak * 0.08), pad = Math.round(0.12 * RATE);
+      let a = 0, b = d.length - 1;
+      while (a < d.length && Math.abs(d[a]) < th) a++;
+      while (b > a && Math.abs(d[b]) < th) b--;
+      if (b > a) d = d.subarray(Math.max(0, a - pad), Math.min(d.length, b + pad));
+      const gain = peak > 0 && peak < 0.5 ? 0.9 / peak : 1; // even out quiet recordings
+      const bytes = new DataView(new ArrayBuffer(44 + d.length * 2));
+      const str = (o, t) => { for (let i = 0; i < t.length; i++) bytes.setUint8(o + i, t.charCodeAt(i)); };
+      str(0, 'RIFF'); bytes.setUint32(4, 36 + d.length * 2, true); str(8, 'WAVE'); str(12, 'fmt ');
+      bytes.setUint32(16, 16, true); bytes.setUint16(20, 1, true); bytes.setUint16(22, 1, true);
+      bytes.setUint32(24, RATE, true); bytes.setUint32(28, RATE * 2, true); bytes.setUint16(32, 2, true); bytes.setUint16(34, 16, true);
+      str(36, 'data'); bytes.setUint32(40, d.length * 2, true);
+      for (let i = 0; i < d.length; i++) bytes.setInt16(44 + i * 2, Math.max(-1, Math.min(1, d[i] * gain)) * 0x7fff, true);
+      return blobToDataUrl(new Blob([bytes.buffer], { type: 'audio/wav' }));
+    } catch (e) {
+      console.warn('WAV conversion failed, keeping original recording', e);
+      return blobToDataUrl(blob);
+    }
+  }
   const clean = o => { Object.keys(o).forEach(k => o[k] === undefined && delete o[k]); return o; };
 
   // ------------------------------------------------------------------ publishing (GitHub contents API)
@@ -417,14 +503,23 @@ window.CUSTOM = ${JSON.stringify(obj, null, 2)};
     const pend = pendingIds();
     const btn = root.querySelector('[data-a="publish"]'); btn.disabled = true; btn.textContent = 'Publishing…';
     try {
+      // 0) start from the latest published file (someone may have published from another device)
+      btn.textContent = 'Checking for other changes…';
+      let latest = BASE;
+      try {
+        const f = await api(`/contents/data/custom.js?ref=${encodeURIComponent(gh.branch)}`);
+        const txt = new TextDecoder().decode(Uint8Array.from(atob(f.content.replace(/\s/g, '')), c => c.charCodeAt(0)));
+        const m = /window\.CUSTOM\s*=\s*([\s\S]*?);\s*$/.exec(txt.trim());
+        if (m) latest = JSON.parse(m[1]);
+      } catch (e) { if (e.status && e.status !== 404) throw e; }
       // 1) upload new recordings
-      const out = JSON.parse(JSON.stringify(draft));
+      const out = stripBase(applyChanges(latest, changesOf(draft, draft.__base || BASE)));
       const recs = [];
       Object.entries(out.items).forEach(([id, p]) => { if (p.audio && p.audio.startsWith('data:')) recs.push([id, p]); });
       out.added.forEach(a => { if (a.audio && a.audio.startsWith('data:')) recs.push([a.id, a]); });
       for (const [id, p] of recs) {
         const m = /^data:([^;,]+)[^,]*,(.*)$/.exec(p.audio);
-        const ext = /mp4|m4a/.test(m[1]) ? 'm4a' : /ogg/.test(m[1]) ? 'ogg' : 'webm';
+        const ext = /wav/.test(m[1]) ? 'wav' : /mp4|m4a|aac/.test(m[1]) ? 'm4a' : /ogg/.test(m[1]) ? 'ogg' : 'webm';
         const path = `data/audio/${id}-${Date.now().toString(36)}.${ext}`;
         btn.textContent = `Uploading recording for ${id}…`;
         await putFile(path, m[2], `Admin: recording for ${id}`);
@@ -434,9 +529,9 @@ window.CUSTOM = ${JSON.stringify(obj, null, 2)};
       btn.textContent = 'Saving changes…';
       const names = pend.map(id => (M.items[id] && M.items[id].en) || id).slice(0, 6).join(', ');
       await putFile('data/custom.js', b64utf8(customJs(out)), `Admin: update ${pend.length} card${pend.length > 1 ? 's' : ''} (${names}${pend.length > 6 ? '…' : ''})`);
-      draft = out; saveDraft();
-      window.CUSTOM = JSON.parse(JSON.stringify(out));
-      Object.assign(BASE, JSON.parse(JSON.stringify(out)));
+      Object.keys(BASE).forEach(k => delete BASE[k]); Object.assign(BASE, clone(out));
+      window.CUSTOM = clone(out);
+      draft = Object.assign(clone(out), { __base: clone(out) }); saveDraft();
       toast('Published ✓ — live for everyone in about a minute', 5000);
       render();
     } catch (e) {
@@ -446,10 +541,37 @@ window.CUSTOM = ${JSON.stringify(obj, null, 2)};
   }
   function download() {
     const a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob([customJs(draft)], { type: 'text/javascript' }));
+    a.href = URL.createObjectURL(new Blob([customJs(stripBase(draft))], { type: 'text/javascript' }));
     a.download = 'custom.js'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
     toast('Downloaded — replace data/custom.js in the repo with it. (Recordings only publish via the token.)', 6000);
   }
+
+  function soundCheck() {
+    const info = S.voiceInfo();
+    const a = document.createElement('audio');
+    const fmt = t => a.canPlayType(t) ? '✓' : '✗';
+    S.say({ pa: 'ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ', rom: 'sat sri akal' });
+    setTimeout(() => {
+      const last = S.sound.last;
+      alertBox(`<b>Sound check</b><br>
+        Text-to-speech: ${window.speechSynthesis ? 'available' : '<b>not available</b>'} · voices loaded: ${window.speechSynthesis ? speechSynthesis.getVoices().length : 0}<br>
+        Punjabi voice: ${esc(info.pa || 'none')} · Hindi voice: ${esc(info.hi || 'none')} · English voice: ${esc(info.en || 'none')}<br>
+        Can play recordings: WAV ${fmt('audio/wav')} · WebM ${fmt('audio/webm')} · M4A ${fmt('audio/mp4')}<br>
+        Last sound result: ${last ? esc(last.kind + (last.detail ? ' — ' + last.detail : '')) : 'nothing reported (if you heard nothing, check the volume and the silent switch)'}`);
+    }, 1500);
+  }
+  function alertBox(html) {
+    const d = document.createElement('div'); d.className = 'adm-overlay';
+    d.innerHTML = `<div class="adm-panel"><div class="small">${html}</div><div class="row"><span class="spacer"></span><button class="btn primary">OK</button></div></div>`;
+    d.onclick = e => { if (e.target.closest('button') || e.target === d) d.remove(); };
+    document.body.appendChild(d);
+  }
+  window.addEventListener('pfc-sound', e => {
+    const r = e.detail || {};
+    if (r.kind === 'audio-failed') toast("Couldn't play the recording on this device (" + (r.detail || 'error') + ') — using the computer voice', 4500);
+    if (r.kind === 'tts-error') toast('No sound: the voice reported "' + r.detail + '". Check volume / silent switch, then try 🔊 Sound check', 5000);
+    if (r.kind === 'no-tts') toast('This browser has no text-to-speech. Record the word instead.', 5000);
+  });
 
   // voices load asynchronously in some browsers
   if (window.speechSynthesis) window.speechSynthesis.addEventListener && window.speechSynthesis.addEventListener('voiceschanged', () => { if (!document.querySelector('.adm-overlay')) render(); });
