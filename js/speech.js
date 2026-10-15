@@ -164,7 +164,12 @@
   let voices = [];
   function loadVoices() { try { voices = root.speechSynthesis ? root.speechSynthesis.getVoices() : []; } catch (e) { voices = []; } }
   if (root.speechSynthesis) { loadVoices(); root.speechSynthesis.onvoiceschanged = loadVoices; }
-  function pickVoice(prefix) { return voices.find(v => v.lang && v.lang.toLowerCase().replace('_', '-').startsWith(prefix)); }
+  // voices that failed on this device ("synthesis-failed": listed but not downloaded / not usable) are skipped
+  const badVoices = new Set();
+  function pickVoice(prefix) {
+    const ok = voices.filter(v => v.lang && v.lang.toLowerCase().replace('_', '-').startsWith(prefix) && !badVoices.has(v.voiceURI || v.name));
+    return ok.find(v => v.localService) || ok[0];
+  }
   function ttsMode() {
     if (!root.speechSynthesis) return 'none';
     if (pickVoice('pa')) return 'pa';
@@ -221,24 +226,42 @@
     if (mode === 'hi' && !pickVoice('hi')) mode = auto === 'pa' ? 'pa' : 'en';
     const src = text.speakAs || text.pa || '';
     const isGur = /[਀-੿]/.test(src);
-    let u;
-    if (mode === 'pa' && isGur) { u = new SpeechSynthesisUtterance(src); u.voice = pickVoice('pa'); u.lang = u.voice.lang; }
-    else if ((mode === 'hi' || mode === 'pa') && isGur) { u = new SpeechSynthesisUtterance(gurToDeva(src)); u.voice = pickVoice('hi') || pickVoice('pa'); if (u.voice) u.lang = u.voice.lang; }
-    else {
-      const en = (text.speakAs && !isGur ? text.speakAs : (text.rom || '')).replace(/\(n\)/g, 'n').replace(/-/g, '').split(' / ')[0];
-      u = new SpeechSynthesisUtterance(en); const v = pickVoice('en'); if (v) u.voice = v; u.lang = (v && v.lang) || 'en-US';
+    const enText = (text.speakAs && !isGur ? text.speakAs : (text.rom || '')).replace(/\(n\)/g, 'n').replace(/-/g, '').split(' / ')[0];
+    // Ways to say it, best first. If a voice fails on this phone we fall through to the next one.
+    const tries = [];
+    if (isGur && mode === 'pa') tries.push({ text: src, voice: pickVoice('pa'), lang: 'pa-IN' });
+    if (isGur && (mode === 'hi' || mode === 'pa') && pickVoice('hi')) tries.push({ text: gurToDeva(src), voice: pickVoice('hi'), lang: 'hi-IN' });
+    if (isGur && mode === 'pa') tries.push({ text: src, voice: null, lang: 'pa-IN' });            // let the phone choose
+    if (enText) {
+      tries.push({ text: enText, voice: pickVoice('en'), lang: 'en-US' });
+      tries.push({ text: enText, voice: null, lang: 'en-US' });                                    // phone's default voice
     }
-    u.rate = text.rate || opts.rate || 0.8;
-    u.onerror = e => { if (e.error !== 'interrupted' && e.error !== 'canceled') report('tts-error', e.error); };
-    u.onstart = () => report('ok', mode);
-    synth.speak(u);
-    // Chrome on Android sometimes stalls the queue; a resume() nudge fixes it
-    setTimeout(() => { try { if (synth.pending && !synth.speaking) synth.resume(); } catch (e) {} }, 250);
+    const rate = text.rate || opts.rate || 0.8;
+    const attempt = i => {
+      const t = tries[i];
+      if (!t) { report('tts-error', 'no working voice'); return; }
+      const u = new SpeechSynthesisUtterance(t.text);
+      if (t.voice) u.voice = t.voice;
+      u.lang = (t.voice && t.voice.lang) || t.lang;
+      u.rate = rate;
+      let started = false;
+      u.onstart = () => { started = true; report('ok', (t.voice && t.voice.name) || u.lang); };
+      u.onerror = e => {
+        if (e.error === 'interrupted' || e.error === 'canceled') return;
+        if (t.voice && /synthesis|voice|language/.test(e.error || '')) badVoices.add(t.voice.voiceURI || t.voice.name);
+        if (!started && i + 1 < tries.length) { try { synth.cancel(); } catch (x) {} setTimeout(() => attempt(i + 1), 60); }
+        else report('tts-error', e.error);
+      };
+      synth.speak(u);
+      // Chrome on Android sometimes stalls the queue; a resume() nudge fixes it
+      setTimeout(() => { try { if (synth.pending && !synth.speaking) synth.resume(); } catch (x) {} }, 250);
+    };
+    attempt(0);
     return true;
   }
   function voiceInfo() {
     loadVoices();
-    return { pa: (pickVoice('pa') || {}).name || null, hi: (pickVoice('hi') || {}).name || null, en: (pickVoice('en') || {}).name || null, auto: ttsMode() };
+    return { pa: (pickVoice('pa') || {}).name || null, hi: (pickVoice('hi') || {}).name || null, en: (pickVoice('en') || {}).name || null, auto: ttsMode(), bad: [...badVoices] };
   }
 
   /**

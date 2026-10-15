@@ -556,6 +556,7 @@ window.CUSTOM = ${JSON.stringify(obj, null, 2)};
       alertBox(`<b>Sound check</b><br>
         Text-to-speech: ${window.speechSynthesis ? 'available' : '<b>not available</b>'} · voices loaded: ${window.speechSynthesis ? speechSynthesis.getVoices().length : 0}<br>
         Punjabi voice: ${esc(info.pa || 'none')} · Hindi voice: ${esc(info.hi || 'none')} · English voice: ${esc(info.en || 'none')}<br>
+        ${info.bad && info.bad.length ? `Voices that failed and are now skipped: ${esc(info.bad.join(', '))}<br>` : ''}
         Can play recordings: WAV ${fmt('audio/wav')} · WebM ${fmt('audio/webm')} · M4A ${fmt('audio/mp4')}<br>
         Last sound result: ${last ? esc(last.kind + (last.detail ? ' — ' + last.detail : '')) : 'nothing reported (if you heard nothing, check the volume and the silent switch)'}`);
     }, 1500);
