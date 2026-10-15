@@ -164,7 +164,7 @@
   let voices = [];
   function loadVoices() { try { voices = root.speechSynthesis ? root.speechSynthesis.getVoices() : []; } catch (e) { voices = []; } }
   if (root.speechSynthesis) { loadVoices(); root.speechSynthesis.onvoiceschanged = loadVoices; }
-  function pickVoice(prefix) { return voices.find(v => v.lang && v.lang.toLowerCase().startsWith(prefix)); }
+  function pickVoice(prefix) { return voices.find(v => v.lang && v.lang.toLowerCase().replace('_', '-').startsWith(prefix)); }
   function ttsMode() {
     if (!root.speechSynthesis) return 'none';
     if (pickVoice('pa')) return 'pa';
@@ -172,22 +172,49 @@
     return 'en';
   }
   let current = null;
+  const blobCache = {};
+  /** data: URLs → blob: URLs (iOS Safari plays these more reliably), done synchronously so the tap still counts */
+  function playableUrl(u) {
+    if (!/^data:/.test(u)) return u;
+    if (blobCache[u]) return blobCache[u];
+    try {
+      const m = /^data:([^;,]+)[^,]*,(.*)$/.exec(u);
+      const bin = atob(m[2]); const arr = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+      return (blobCache[u] = URL.createObjectURL(new Blob([arr], { type: m[1] })));
+    } catch (e) { return u; }
+  }
+  const report = (kind, detail) => {
+    S_state.last = { kind, detail, at: Date.now() };
+    try { root.dispatchEvent(new CustomEvent('pfc-sound', { detail: S_state.last })); } catch (e) {}
+  };
+  const S_state = { last: null };
   /**
    * speak({pa, rom, audio, speakAs, voice, rate}, {rate})
    *   audio   — URL of a recorded clip (always wins)
    *   speakAs — alternative text for the voice to read (Gurmukhi or English-letters)
    *   voice   — 'auto' | 'pa' | 'hi' | 'en' to force which voice reads it
+   * Must be called straight from a tap/click (phones block sound otherwise).
    */
   function say(text, opts = {}) {
     if (current && current.pause) { try { current.pause(); } catch (e) {} current = null; }
+    const synth = root.speechSynthesis;
     if (text.audio && root.Audio) {
-      try { if (root.speechSynthesis) root.speechSynthesis.cancel(); } catch (e) {}
-      const a = new root.Audio(text.audio); current = a;
-      a.play().catch(() => { current = null; const t = Object.assign({}, text); delete t.audio; say(t, opts); });
+      try { if (synth && (synth.speaking || synth.pending)) synth.cancel(); } catch (e) {}
+      const a = new root.Audio(); a.preload = 'auto'; a.src = playableUrl(text.audio); current = a;
+      const p = a.play();
+      if (p && p.catch) p.catch(err => {
+        current = null; report('audio-failed', err && (err.name || err.message));
+        const t = Object.assign({}, text); delete t.audio; say(t, opts);
+      });
       return true;
     }
-    if (!root.speechSynthesis) return false;
-    const synth = root.speechSynthesis; synth.cancel();
+    if (!synth) { report('no-tts', 'This browser has no text-to-speech'); return false; }
+    loadVoices(); // iOS doesn't always fire voiceschanged
+    // Only cancel when something is actually playing — cancel() immediately followed by speak() swallows the new
+    // utterance on iOS Safari and some Android builds.
+    if (synth.speaking || synth.pending) synth.cancel();
+    if (synth.paused) synth.resume();
     const auto = ttsMode();
     let mode = text.voice && text.voice !== 'auto' ? text.voice : auto;
     if (mode === 'pa' && !pickVoice('pa')) mode = auto;
@@ -199,10 +226,14 @@
     else if ((mode === 'hi' || mode === 'pa') && isGur) { u = new SpeechSynthesisUtterance(gurToDeva(src)); u.voice = pickVoice('hi') || pickVoice('pa'); if (u.voice) u.lang = u.voice.lang; }
     else {
       const en = (text.speakAs && !isGur ? text.speakAs : (text.rom || '')).replace(/\(n\)/g, 'n').replace(/-/g, '').split(' / ')[0];
-      u = new SpeechSynthesisUtterance(en); const v = pickVoice('en'); if (v) u.voice = v; u.lang = 'en-US';
+      u = new SpeechSynthesisUtterance(en); const v = pickVoice('en'); if (v) u.voice = v; u.lang = (v && v.lang) || 'en-US';
     }
     u.rate = text.rate || opts.rate || 0.8;
+    u.onerror = e => { if (e.error !== 'interrupted' && e.error !== 'canceled') report('tts-error', e.error); };
+    u.onstart = () => report('ok', mode);
     synth.speak(u);
+    // Chrome on Android sometimes stalls the queue; a resume() nudge fixes it
+    setTimeout(() => { try { if (synth.pending && !synth.speaking) synth.resume(); } catch (e) {} }, 250);
     return true;
   }
   function voiceInfo() {
@@ -267,5 +298,5 @@
     return (s || '').split(' / ').map(alt => alt.replace(/[?,.!।]/g, '').trim().split(/\s+/).filter(Boolean).map(anglicizeWord).join(' ')).join(' / ');
   }
 
-  root.SPEECH = { available: !!SR, listen, stop, say, ttsMode, voiceInfo, key, gurToLatin, gurToDeva, anglicize, scoreHeard, sim, state };
+  root.SPEECH = { available: !!SR, listen, stop, say, ttsMode, voiceInfo, sound: S_state, playableUrl, key, gurToLatin, gurToDeva, anglicize, scoreHeard, sim, state };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -39,9 +39,25 @@ details.gh ol { padding-left: 20px; margin: 8px 0; }
 .danger-t { color: #b5501d !important; }
 input[type=range] { width: 200px; accent-color: var(--teal); }
 code { background: #f3ece2; padding: 1px 6px; border-radius: 6px; font-size: 13px; }
+.pron .row.wrap > .field { flex: 1 1 180px; min-width: 0; }
+.adm-panel select, .adm-panel input { max-width: 100%; }
+.adm-panel .field { min-width: 0; }
 @media (max-width: 640px) {
+  body.admin #admin { padding: 12px 10px 60px; }
+  .adm-top h1 { font-size: 24px; }
+  .publish-box { width: 100%; justify-content: space-between; }
   .gh-grid { grid-template-columns: 1fr; }
-  .adm-row { flex-wrap: wrap; }
-  .adm-row .main { flex-basis: calc(100% - 60px); }
   .toolbar .seg { min-width: 0; width: 100%; }
+  .toolbar .search { flex: 1 1 100%; }
+  .toolbar select { flex: 1; }
+  .adm-row { gap: 8px; padding: 10px; align-items: flex-start; }
+  .adm-row .lno { width: 26px; font-size: 12px; padding-top: 4px; }
+  .adm-row .icon-btn { width: 40px; height: 40px; font-size: 18px; }
+  .adm-row .btn { padding: 8px 12px; }
+  .adm-overlay { padding: 0; }
+  .adm-panel { border-radius: 0; min-height: 100%; padding: 14px 12px 80px; }
+  .adm-panel > .row:last-child { position: sticky; bottom: 0; background: var(--bg); padding: 10px 0; }
+  .pron .btn { padding: 10px 14px; }
+  input[type=range] { width: 100%; }
+  .key { min-width: 34px; height: 38px; font-size: 18px; }
 }

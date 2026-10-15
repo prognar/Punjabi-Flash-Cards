@@ -793,6 +793,13 @@
     };
   }
 
+  // tell the learner when a sound couldn't play instead of failing silently
+  window.addEventListener('pfc-sound', e => {
+    const r = e.detail || {};
+    if (r.kind === 'tts-error') toast('No sound (' + r.detail + ') — check the volume / silent switch');
+    if (r.kind === 'no-tts') toast('This browser can’t play speech');
+  });
+
   // ------------------------------------------------------------ boot
   const act = Store.active();
   if (act) { P = act; PR = Store.progress(act.id); E.touchStreak(PR); route = { name: 'home' }; }
