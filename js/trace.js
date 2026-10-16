@@ -144,14 +144,14 @@
       const ranked = all.map(g => [g, shapeDistance(this.strokes, g)]).sort((a, b) => a[1] - b[1]);
       const rank = ranked.findIndex(r => r[0] === this.glyph);
       const dist = (ranked.find(r => r[0] === this.glyph) || [0, 99])[1];
-      const maxRank = strict ? 1 : 2, maxDist = strict ? 1.4 : 1.8;
+      const maxRank = strict ? 2 : 3, maxDist = strict ? 1.9 : 2.1;
       return { rank, dist, best: ranked[0][0], score: 1 / (1 + dist), pass: rank <= maxRank && dist <= maxDist };
     }
     const G = glyphInfo(this.glyph).m;
     const U = mask(x => drawInk(x, this.strokes, N, '#000', N * 0.065));
-    const coverage = overlap(G, dilate(U, 5));
-    const precision = overlap(U, dilate(G, 5));
-    const need = strict ? 0.72 : 0.6;
+    const coverage = overlap(G, dilate(U, 8));
+    const precision = overlap(U, dilate(G, 8));
+    const need = strict ? 0.6 : 0.55;
     return { coverage, precision, score: Math.min(coverage, precision), pass: coverage >= need && precision >= need };
   };
 

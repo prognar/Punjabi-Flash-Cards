@@ -75,7 +75,7 @@ Open it from **Backup & settings → Admin**, or go to `/admin.html`.
 
 **Writing check:**
 - **Trace mode** checks how much of the letter the ink covers and how much of the ink stays on the letter.
-- **Freehand mode** resizes the drawing and compares it with all 35 letters. It passes only when the target letter is one of the closest matches. In testing, simulated handwriting passed about 92–96% of the time and random scribbles 0%.
+- **Freehand mode** resizes the drawing and compares it with all 35 letters. It passes only when the target letter is one of the closest matches. In testing, simulated handwriting passed about 97–99% of the time and random scribbles about 3%.
 - After a miss, the app shows which letter the drawing looked like.
 
 ## Speech
