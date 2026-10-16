@@ -399,7 +399,7 @@
         const r = pad.score(!isKid());
         tries++;
         if (r.pass) { pad.showAnswer = write; pad.draw(); document.getElementById('padActions').remove(); grade(true, it, card, el, { noAuto: write }); return; }
-        if (tries < 2) {
+        if (tries < 3) {
           const hint = write
             ? (r.best && r.best !== it.glyph ? `That looks more like <span class="gur" style="font-size:30px">${esc(r.best)}</span> — have a look and try again!` : 'Not quite — have a look and try again!')
             : (r.coverage < r.precision ? 'Cover more of the letter — try again!' : 'Try to stay on the letter — try again!');
