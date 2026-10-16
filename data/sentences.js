@@ -36,15 +36,15 @@ window.SENTENCES = {
   //  t thing · fx fixed thing · an animal · pe person · b body part · pl place · f food · me/md mass eat/drink
   //  m mass · np plural noun · adj adjective · adj1 adjective without "very" · v verb (infinitive)
   classes: {
-    t: ['ball', 'basket', 'boat', 'chair', 'flower', 'key', 'knife', 'pen', 'shoe', 'leaf'],
-    fx: ['door', 'moon', 'sky', 'star', 'sun', 'table', 'tree', 'window'],
-    an: ['bird', 'cat', 'cow', 'dog', 'fish', 'horse', 'monkey', 'parrot', 'snake'],
-    pe: ['baby', 'doctor', 'girl', 'king', 'queen', 'teacher', 'woman'],
-    b: ['arm', 'ear', 'eye', 'face', 'foot', 'hand', 'head', 'heart', 'mouth', 'nose', 'tooth'],
-    pl: ['city', 'kitchen', 'river', 'road', 'school', 'village', 'zoo'],
-    f: ['apple', 'egg', 'fruit', 'mango', 'potato', 'vegetable'],
+    t: ['ball', 'basket', 'boat', 'chair', 'flower', 'key', 'knife', 'pen', 'shoe', 'leaf', 'book', 'box', 'bell', 'bed', 'letter'],
+    fx: ['door', 'moon', 'sky', 'star', 'sun', 'table', 'tree', 'window', 'bus'],
+    an: ['bird', 'cat', 'cow', 'dog', 'fish', 'horse', 'monkey', 'parrot', 'snake', 'bear'],
+    pe: ['baby', 'doctor', 'girl', 'king', 'queen', 'teacher', 'woman', 'boy', 'man'],
+    b: ['arm', 'ear', 'eye', 'face', 'foot', 'hand', 'head', 'heart', 'mouth', 'nose', 'tooth', 'bone'],
+    pl: ['city', 'kitchen', 'river', 'road', 'school', 'village', 'zoo', 'garden'],
+    f: ['apple', 'egg', 'fruit', 'mango', 'potato', 'vegetable', 'chocolate', 'bread'],
     me: ['rice'], md: ['milk', 'juice', 'tea'], m: ['ice'], np: ['clothes', 'money'],
-    adj: ['bad', 'beautiful', 'big', 'blue', 'clean', 'cold', 'fast', 'good', 'green', 'hot', 'little', 'new', 'old', 'red', 'sweet', 'white', 'yellow'],
+    adj: ['brave', 'bad', 'beautiful', 'big', 'blue', 'clean', 'cold', 'fast', 'good', 'green', 'hot', 'little', 'new', 'old', 'red', 'sweet', 'white', 'yellow'],
     adj1: ['better'],
     v: ['jump', 'laugh', 'play', 'run', 'sleep', 'walk', 'write', 'eat', 'drink']
   },
@@ -134,7 +134,17 @@ window.SENTENCES = {
     ['ਛੇਤੀ ਆਓ', 'chhay-tee aao', 'quickly|come', 'Come quickly.', 'v:quickly', 0, ['ਹੌਲੀ', 'ਕੱਲ੍ਹ']],
     ['ਚੁੱਪ ਕਰੋ', 'chupp karo', 'quiet|do', 'Be quiet.', 'v:quiet', 0, ['ਛੇਤੀ', 'ਸਾਫ਼']],
     ['ਕੱਲ੍ਹ ਆਉਣਾ', 'kull aa-oo-naa', 'tomorrow|come', 'Come tomorrow.', 'v:come', 1, ['ਰੋਣਾ', 'ਸੌਣਾ']],
-    ['ਰੋਣਾ ਨਹੀਂ', 'ro-naa nahi(n)', 'cry|not', "Don't cry.", 'v:cry', 0, ['ਹੱਸਣਾ', 'ਖੇਡਣਾ']]
+    ['ਰੋਣਾ ਨਹੀਂ', 'ro-naa nahi(n)', 'cry|not', "Don't cry.", 'v:cry', 0, ['ਹੱਸਣਾ', 'ਖੇਡਣਾ']],
+    ['ਮੈਂ ਅਮਰੀਕਾ ਵਿੱਚ ਪੈਦਾ ਹੋਇਆ', 'main amreekaa vich paidaa hoia', 'I|America|in|born|became (m)', 'I was born in America.', 'v:born', 3, ['ਉਧਾਰ', 'ਬਹਾਦਰ']],
+    ['ਮੈਨੂੰ ਇੱਕ ਕਿਤਾਬ ਉਧਾਰ ਦਿਓ', 'mainu ikk kitaab udhaar dio', 'to me|one|book|on loan|give', 'Lend me a book.', 'v:borrow', 3, ['ਪੈਦਾ', 'ਡੱਬਾ']],
+    ['ਦੋਨੋਂ ਬੱਚੇ ਖੇਡ ਰਹੇ ਹਨ', 'dono bachche khed rahe han', 'both|children|play|-ing|are', 'Both children are playing.', 'v:both', 0, ['ਕੋਈ', 'ਹੁਣ']],
+    ['ਲੰਮਾ ਸਾਹ ਲਓ', 'lamma saah lao', 'long|breath|take', 'Take a deep breath.', 'v:breathe', 1, ['ਪਾਣੀ', 'ਰੋਟੀ']],
+    ['ਹੁਣ ਕੀ ਸਮਾਂ ਹੈ?', 'hun kee samaa(n) hai', 'now|what|time|is?', 'What time is it now?', 'v:time', 2, ['ਦਿਨ', 'ਸਾਲ']],
+    ['ਮੈਨੂੰ ਇੱਕ ਕਹਾਣੀ ਸੁਣਾਓ', 'mainu ikk kahaanee sunaao', 'to me|one|story|tell (aloud)', 'Tell me a story.', 'v:story', 2, ['ਚਿੱਠੀ', 'ਕਿਤਾਬ']],
+    ['ਬੀਜ ਜ਼ਮੀਨ ਵਿੱਚ ਹੈ', 'beej zameen vich hai', 'seed|ground|in|is', 'The seed is in the ground.', 'v:seed', 0, ['ਬੱਸ', 'ਘੰਟੀ']],
+    ['ਬੱਚੇ ਜ਼ਮੀਨ ਉੱਤੇ ਬੈਠੇ ਹਨ', 'bachche zameen utte baithe han', 'children|ground|on|sitting|are', 'The children are sitting on the ground.', 'v:ground', 1, ['ਬਿਸਤਰਾ', 'ਅਸਮਾਨ']],
+    ['ਇਹ ਕੀ ਚੀਜ਼ ਹੈ?', 'eh kee cheez hai', 'this|what|thing|is?', 'What is this thing?', 'v:thing', 2, ['ਕਹਾਣੀ', 'ਸਮਾਂ']],
+    ['ਮੇਰਾ ਦੋਸਤ ਇੱਥੇ ਹੈ', 'mera dost ithe hai', 'my|friend|here|is', 'My friend is here.', 'v:friend', 1, ['ਮੁੰਡਾ', 'ਰਾਜਾ']]
   ],
 
   conversations: [
