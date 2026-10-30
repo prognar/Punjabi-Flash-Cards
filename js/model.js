@@ -37,7 +37,8 @@
     const it = {
       id, kind, en, origEn: origEn || en, pa, rom, paAnswers, romAnswers: splitAlts(rom),
       note: opt.note || '', check: opt.check || '', src: opt.src || 'teacher', group: opt.group || '',
-      verified: !!opt.verified, edited: !!opt.edited
+      verified: !!opt.verified, edited: !!opt.edited,
+      cat: kind === 'vocab' ? (opt.cat || (C.vocabCats || {})[(origEn || en).toLowerCase()] || 'other') : null
     };
     PRON.forEach(k => { if (opt[k] != null && opt[k] !== '') it[k] = opt[k]; });
     return it;
@@ -147,5 +148,9 @@
     c.focus.forEach(id => (convByFocus[id] = convByFocus[id] || []).push(c));
   });
 
-  window.MODEL = { items, order, lessons, slug, custom: CU, sentences, sentByFocus, conversations, convByFocus, glossary: SB.glossary || {} };
+  // categories (words) and groups (phrases) for "practice by category"
+  const categories = (C.categories || []).map(([key, name, emoji]) => ({ key, name, emoji, ids: order.vocab.filter(id => items[id].cat === key) })).filter(c => c.ids.length);
+  const groups = [];
+  order.phrase.forEach(id => { const g = items[id].group || 'Phrases'; let G = groups.find(x => x.name === g); if (!G) groups.push(G = { key: 'grp-' + slug(g), name: g, emoji: '💬', ids: [] }); G.ids.push(id); });
+  window.MODEL = { items, order, lessons, slug, custom: CU, categories, groups, sentences, sentByFocus, conversations, convByFocus, glossary: SB.glossary || {} };
 })();
