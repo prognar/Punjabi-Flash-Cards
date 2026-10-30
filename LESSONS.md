@@ -10,8 +10,8 @@ Speech recognition needs Chrome or Edge. Microphone access needs `https://` or `
 | Per lesson | Default |
 |---|---|
 | Letters | 2 and 3, alternating (all 35 letters are covered in 14 lessons) |
-| Words | 10, in alphabetical order, the same as the class list |
-| Phrases | 7, in the teacher's order |
+| Words | 20 — the teacher's words first, then everyday words grouped by category (questions, numbers, colors, food, everyday items, people, time & days, action words…) |
+| Phrases | 8, in the teacher's order |
 
 Lesson sizes are set in `perLesson` in `data/content.js`.
 
@@ -21,6 +21,10 @@ Lesson sizes are set in `perLesson` in `data/content.js`.
   - **Adult:** 20 cards, stricter checks.
 - **"Already covered in class up to lesson N"** unlocks lessons up to that point. Items from earlier lessons are still introduced and then reviewed.
 - Progress is stored in the browser. Use **Backup & settings** to download or restore it, or to move it to another device.
+
+## Keep going
+- **Practice by category**: home screen → any category (Colors, Numbers, Food & drink, Everyday items…) or phrase group. Cards there can be learned any time, even before your lessons reach them, and the progress counts toward lessons.
+- **"Class has moved on? Start lesson N"** on the home screen opens the next lesson whenever you want. Unmastered cards keep coming back in review.
 
 ## How review and mastery work
 - **Spacing:** each card has a level from 0 to 6.
@@ -34,9 +38,10 @@ Lesson sizes are set in `perLesson` in `data/content.js`.
 - **Review share** in a session is 25% when strong, 40% normally and 60% when struggling. Review picks overdue, unmastered and recently missed cards first.
 - **New cards per session** are capped (4 for kids, 6 for adults). The cap is halved when a learner is struggling, and drops to 1 when 8 or more cards in the current lesson are still shaky.
 - **Unlocking the next lesson** requires:
-  - 90% of the lesson mastered,
-  - at least 80% in each section, and
-  - review accuracy of at least 70%.
+  - 80% of the lesson mastered,
+  - at least 60% in each section, and
+  - review accuracy of at least 60%.
+  (Or start the next lesson yourself — see Keep going.)
 - **Simulated pace** (`tests/engine.test.js`): about 3 days per lesson for a strong learner, about 6 for an average one, and about 10 or more for a struggling one.
 
 ## Duolingo-style practice (sentences & conversations)

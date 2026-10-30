@@ -42,7 +42,7 @@
   function render() {
     S.stop();
     if (route.name !== 'profiles' && route.name !== 'editProfile' && !P) route = { name: 'profiles' };
-    const views = { profiles: vProfiles, editProfile: vEditProfile, home: vHome, session: vSession, summary: vSummary, progress: vProgress, browse: vBrowse, settings: vSettings };
+    const views = { profiles: vProfiles, editProfile: vEditProfile, home: vHome, cats: vCats, session: vSession, summary: vSummary, progress: vProgress, browse: vBrowse, settings: vSettings };
     (views[route.name] || vProfiles)();
   }
 
@@ -167,9 +167,9 @@
     if (g.last && g.ok) gateMsg = '🏆 Every lesson is open. Keep reviewing to stay sharp!';
     else if (g.ok) gateMsg = 'Ready for the next lesson!';
     else {
-      const bits = [`${Math.round(s.pct * 100)}% of 90% mastered`];
-      if (!g.kindsOk) bits.push('each section needs 80%');
-      if (!g.reviewOk) bits.push(`review accuracy ${Math.round((g.reviewAcc || 0) * 100)}% (needs 70%)`);
+      const bits = [`${Math.round(s.pct * 100)}% of ${Math.round(E.GATE.overall * 100)}% mastered`];
+      if (!g.kindsOk) bits.push(`each section needs ${Math.round(E.GATE.perKind * 100)}%`);
+      if (!g.reviewOk) bits.push(`review accuracy ${Math.round((g.reviewAcc || 0) * 100)}% (needs ${Math.round(E.GATE.review * 100)}%)`);
       gateMsg = `Lesson ${L.n + 1 <= lessons.length ? L.n + 1 : ''} unlocks at: ${bits.join(' · ')}`;
     }
     app.innerHTML = `
@@ -187,11 +187,16 @@
         <div class="small" style="font-weight:600">${esc(gateMsg)}</div>
         ${s.lockTomorrow ? `<div class="small tomorrow">🌙 ${s.lockTomorrow} card${s.lockTomorrow > 1 ? 's' : ''} learned today. Get ${s.lockTomorrow > 1 ? 'them' : 'it'} right again on another day to lock ${s.lockTomorrow > 1 ? 'them' : 'it'} in as mastered — that's what opens the next lesson.</div>` : ''}
         <button class="btn primary big block" data-act="start" data-scope="all">▶ Today's practice</button>
+        ${!g.ok && L.n < lessons.length ? `<button class="btn ghost block" data-act="next">Class has moved on? Start lesson ${L.n + 1} →</button>` : ''}
       </div>
       <div class="stack" style="margin-top:16px">
         ${sec('letter', L.letter.map(id => items[id].glyph).join(''), 'l', 'Letters', L.letter.map(id => esc(items[id].rom)).join(', '))}
         ${sec('vocab', '📖', 'v', 'Words', L.vocab.slice(0, 4).map(id => esc(items[id].en)).join(', ') + (L.vocab.length > 4 ? '…' : ''))}
         ${sec('phrase', '💬', 'p', 'Phrases', L.phrase.slice(0, 3).map(id => esc(items[id].en)).join(', ') + (L.phrase.length > 3 ? '…' : ''))}
+        <div class="card">
+          <div class="row"><h3>Practice by category</h3><span class="spacer"></span><button class="btn ghost" data-act="cats">See all →</button></div>
+          <div class="chips">${window.MODEL.categories.slice(0, 8).map(c => `<button class="chip" data-act="start" data-scope="cat:${c.key}">${c.emoji} ${esc(c.name)}</button>`).join('')}</div>
+        </div>
         <div class="card section">
           <div class="ico" style="background:#fff4dd">🔁</div>
           <div class="meta"><h3>Review</h3><div class="muted small">${due ? `${due} card${due > 1 ? 's' : ''} ready to review` : 'Nothing due right now'}</div></div>
@@ -216,6 +221,35 @@
       if (a === 'progress') go('progress');
       if (a === 'browse') go('browse', { lesson: PR.unlocked, kind: 'letter' });
       if (a === 'edit') go('editProfile', { id: P.id });
+      if (a === 'cats') go('cats');
+      if (a === 'next') {
+        const st = E.lessonStats(PR, L);
+        if (!confirm(`Start lesson ${L.n + 1}?\n\n${st.mastered} of ${st.total} cards in lesson ${L.n} are mastered. The rest keep coming back in review, so nothing is lost.`)) return;
+        E.forceAdvance(PR, lessons); save(); toast(`Lesson ${PR.unlocked} unlocked 🎉`); render();
+      }
+    };
+  }
+
+  // ------------------------------------------------------------ categories
+  function vCats() {
+    const req = E.masteryRequirement(PR);
+    const tile = (c, scope) => {
+      const m = c.ids.filter(id => E.isMastered(PR, id, req)).length, seen = c.ids.filter(id => (E.peek(PR, id) || {}).intro).length;
+      return `<button class="cat-tile" data-scope="${scope}">
+        <div class="cat-emoji">${c.emoji}</div><div class="cat-name">${esc(c.name)}</div>
+        <div class="bar stacked"><i class="part" style="width:${Math.round(seen / c.ids.length * 100)}%"></i><i style="width:${Math.round(m / c.ids.length * 100)}%"></i></div>
+        <div class="muted small">${m}/${c.ids.length} mastered</div></button>`;
+    };
+    app.innerHTML = `
+      <div class="topbar"><button class="icon-btn" data-act="back" aria-label="Back">←</button><h2>Practice by category</h2></div>
+      <p class="muted small">Practice any set of words, any time — even ones your lessons haven't reached yet. Everything you learn here counts toward your lessons too.</p>
+      <h3 style="margin:14px 0 8px">Words</h3>
+      <div class="cat-grid">${window.MODEL.categories.map(c => tile(c, 'cat:' + c.key)).join('')}</div>
+      <h3 style="margin:18px 0 8px">Phrases</h3>
+      <div class="cat-grid">${window.MODEL.groups.filter(g => g.ids.length > 1).map(g => tile(g, 'grp:' + g.key)).join('')}</div>`;
+    app.onclick = e => {
+      if (e.target.closest('[data-act="back"]')) return go('home');
+      const t = e.target.closest('.cat-tile'); if (t) startSession(t.dataset.scope);
     };
   }
 
@@ -725,7 +759,7 @@
       <div class="card" style="margin-top:14px"><h3>Lessons</h3><div class="muted small" style="margin-bottom:10px">% mastered</div>
         <div class="lesson-grid">${lessons.map(L => { const s = E.lessonStats(PR, L); const open = L.n <= PR.unlocked; return `<div class="lesson-cell ${open ? (s.pct >= E.GATE.overall ? 'done' : 'open') : ''}"><b>${L.n}</b>${open ? Math.round(s.pct * 100) + '%' : '🔒'}</div>`; }).join('')}</div></div>
       <div class="card" style="margin-top:14px"><h3>How mastery works for ${esc(P.name)}</h3>
-        <p class="small">An item counts as mastered after it's answered right on <b>${req.days} different days</b> and reaches level <b>${req.box}</b>. This adjusts with accuracy: doing well means fewer repeats; struggling adds more. The next lesson opens at 90% mastered (80% in each section) with review accuracy of at least 70%. Missed cards come back a few cards later and then more often until they stick.</p>
+        <p class="small">An item counts as mastered after it's answered right on <b>${req.days} different days</b> and reaches level <b>${req.box}</b>. This adjusts with accuracy: doing well means fewer repeats; struggling adds more. The next lesson opens at ${Math.round(E.GATE.overall * 100)}% mastered (${Math.round(E.GATE.perKind * 100)}% in each section) with review accuracy of at least ${Math.round(E.GATE.review * 100)}% — or start it yourself any time with “Class has moved on?” on the home screen. Missed cards come back a few cards later and then more often until they stick.</p>
         <p class="small muted">Current pace: ${cap(req.label)} · Review share in sessions: ${Math.round((sk.acc < .7 ? .6 : sk.acc > .9 ? .25 : .4) * 100)}%</p></div>
       ${weak.length ? `<div class="card" style="margin-top:14px"><h3>Needs more practice</h3><div class="list" style="margin-top:8px">${weak.map(rowHTML).join('')}</div></div>` : ''}`;
     app.onclick = e => {

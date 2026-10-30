@@ -137,7 +137,7 @@ canvas.pad { width: 100%; aspect-ratio: 1; background: #fff; border-radius: 22px
 .tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; scrollbar-width: none; }
 .tab { border: 0; background: var(--card); border-radius: 99px; padding: 6px 14px; font-weight: 700; white-space: nowrap; box-shadow: var(--shadow); }
 .tab.on { background: var(--ink); color: #fff; }
-.letter-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.letter-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; max-width: 420px; margin: 0 auto; } /* 7 rows × 5, like the Gurmukhi chart */
 .letter-cell { aspect-ratio: 1; border-radius: 12px; display: grid; place-items: center; font-family: var(--gur); font-size: 26px; background: #f3ece2; color: #b3a593; }
 .letter-cell.learning { background: #fff1d1; color: #a86b00; }
 .letter-cell.mastered { background: var(--teal); color: #fff; }
@@ -178,7 +178,6 @@ canvas.pad { width: 100%; aspect-ratio: 1; background: #fff; border-radius: 22px
   .pa.xl .gur { font-size: 50px; }
   .en-prompt { font-size: 26px; }
   .opt { font-size: 18px; min-height: 76px; }
-  .letter-grid { grid-template-columns: repeat(5, 1fr); }
 }
 
 /* auto-next countdown */
@@ -231,3 +230,12 @@ canvas.pad { width: 100%; aspect-ratio: 1; background: #fff; border-radius: 22px
 .opt.m .gur { font-size: 24px; }
 .opt.m.sel { border-color: var(--blue); background: #eef2ff; }
 .opt.m.right { opacity: .5; }
+
+/* ---------- categories */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.chip { border: 0; background: #f3ece2; border-radius: 99px; padding: 8px 14px; font-weight: 700; }
+.chip:hover { background: #ffe6c7; }
+.cat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.cat-tile { border: 0; background: var(--card); border-radius: 18px; padding: 14px 12px; box-shadow: var(--shadow); text-align: left; display: flex; flex-direction: column; gap: 6px; }
+.cat-tile .cat-emoji { font-size: 30px; }
+.cat-tile .cat-name { font-weight: 800; }

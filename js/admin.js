@@ -83,7 +83,9 @@
     const p = Object.assign({ audio: it.audio, speakAs: it.speakAs, voice: it.voice, rate: it.rate }, over);
     S.say({ pa: it.kind === 'letter' ? it.name : (over.pa || it.paAnswers[0]), rom: over.rom || it.rom, audio: p.audio, speakAs: p.speakAs, voice: p.voice, rate: p.rate }, { rate: 0.8 });
   }
+  const catName = k => { const c = (window.CONTENT.categories || []).find(x => x[0] === k); return c ? c[2] + ' ' + c[1] : ''; };
   const statusBadges = it => [
+    it.kind === 'vocab' && it.cat ? `<span class="pill">${esc(catName(it.cat))}</span>` : '',
     it.hidden ? '<span class="pill">hidden</span>' : '',
     it.src === 'admin' ? '<span class="pill new">added</span>' : it.src === 'generated' ? '<span class="pill">generated</span>' : it.kind !== 'letter' ? '<span class="pill">teacher</span>' : '',
     it.verified ? '<span class="pill mastered">✓ checked</span>' : '',
@@ -220,8 +222,8 @@
     const w = it ? {
       en: it.en, pa: it.pa, rom: it.rom, note: it.note || '', alt: (it.paAnswers || []).slice(it.pa.split(' / ').length).join(', '),
       verified: !!it.verified, hidden: !!it.hidden, speakAs: it.speakAs || '', voice: it.voice || 'auto', rate: it.rate || 0.8,
-      audio: it.audio || '', sound: it.sound || '', after: ''
-    } : { en: '', pa: '', rom: '', note: '', alt: '', verified: false, hidden: false, speakAs: '', voice: 'auto', rate: 0.8, audio: '', sound: '', after: '' };
+      audio: it.audio || '', sound: it.sound || '', after: '', cat: it.cat || ''
+    } : { cat: '', en: '', pa: '', rom: '', note: '', alt: '', verified: false, hidden: false, speakAs: '', voice: 'auto', rate: 0.8, audio: '', sound: '', after: '' };
     let romTouched = !!(it && it.rom);
     const origPa = it ? it.pa : '';
     let rec = null, chunks = [];
@@ -249,6 +251,7 @@
             ${sugg && sugg !== w.rom && (!w.rom || w.pa !== origPa) ? `<div class="sugg small">Suggested from the Gurmukhi: <b>${esc(sugg)}</b> <button class="link-btn" data-x="usesugg">Use this</button></div>` : ''}
             <label class="field"><span>Other accepted answers (Gurmukhi, comma-separated)</span><input class="input gur-in" data-f="alt" value="${esc(w.alt)}"></label>
             <label class="field"><span>Note shown on the card</span><input class="input" data-f="note" value="${esc(w.note)}" placeholder="e.g. used for both yesterday and tomorrow"></label>
+            ${kind === 'vocab' ? `<label class="field"><span>Category</span><select class="input" data-f="cat">${(window.CONTENT.categories || []).map(([k, n, e]) => `<option value="${k}" ${(w.cat || 'other') === k ? 'selected' : ''}>${e} ${esc(n)}</option>`).join('')}</select></label>` : ''}
             ${isNew ? `<label class="field"><span>Where in the lessons</span><select class="input" data-f="after"><option value="">Next class slot (after the teacher's latest, before generated words)</option>${afterOptions()}</select></label>` : ''}
             <div class="row wrap">
               <label class="row" style="gap:6px"><input type="checkbox" data-f="verified" ${w.verified ? 'checked' : ''}> Checked by the teacher</label>
@@ -381,7 +384,7 @@
         if (isNew) {
           let id = (kind === 'vocab' ? 'v-' : 'p-') + M.slug(w.en);
           let n = 2; while (M.items[id] || draft.added.find(x => x.id === id)) id = id.replace(/-\d+$/, '') + '-' + n++;
-          const row = clean(Object.assign({ id, kind, en: w.en.trim(), pa: w.pa.trim(), rom: w.rom.trim(), note: w.note.trim() || undefined, alt: alt.length ? alt : undefined,
+          const row = clean(Object.assign({ id, kind, en: w.en.trim(), pa: w.pa.trim(), rom: w.rom.trim(), note: w.note.trim() || undefined, alt: alt.length ? alt : undefined, cat: kind === 'vocab' ? (w.cat || 'other') : undefined,
             verified: w.verified || undefined, after: w.after || undefined, src: 'admin' }, pron));
           draft.added.push(row);
           saveDraft(); toast('Added — publish to share it'); setTimeout(() => reloadKeeping(), 500);
@@ -389,7 +392,7 @@
         }
         if (it.added) {
           const row = draft.added.find(x => x.id === it.id);
-          Object.assign(row, { en: w.en.trim(), pa: w.pa.trim(), rom: w.rom.trim(), note: w.note.trim() || undefined, alt: alt.length ? alt : undefined, verified: w.verified || undefined, hidden: w.hidden || undefined });
+          Object.assign(row, { en: w.en.trim(), pa: w.pa.trim(), rom: w.rom.trim(), note: w.note.trim() || undefined, alt: alt.length ? alt : undefined, verified: w.verified || undefined, hidden: w.hidden || undefined, cat: kind === 'vocab' ? (w.cat || 'other') : undefined });
           ['speakAs', 'voice', 'rate', 'audio'].forEach(k => { row[k] = pron[k]; });
           Object.keys(row).forEach(k => row[k] === undefined && delete row[k]);
           saveDraft(); toast('Saved — publish to share it'); setTimeout(() => reloadKeeping(), 400);
@@ -407,6 +410,7 @@
           if (w.pa.trim() !== b.pa) patch.pa = w.pa.trim();
           if (w.rom.trim() !== b.rom) patch.rom = w.rom.trim();
           if ((w.note.trim() || '') !== (b.opt.note || '')) patch.note = w.note.trim();
+          if (kind === 'vocab' && w.cat && w.cat !== (b.opt.cat || (window.CONTENT.vocabCats || {})[(it.origEn || it.en).toLowerCase()] || 'other')) patch.cat = w.cat;
           if (JSON.stringify(alt) !== JSON.stringify(b.opt.alt || [])) patch.alt = alt;
           if (w.verified) patch.verified = true;
           if (w.hidden) patch.hidden = true;

@@ -176,7 +176,7 @@
     out.lockTomorrow = lockTomorrow;
     return out;
   }
-  const GATE = { overall: 0.9, perKind: 0.8, review: 0.7 };
+  const GATE = { overall: 0.8, perKind: 0.6, review: 0.6 };
   function gateStatus(pr, lessons) {
     const L = lessons[pr.unlocked - 1];
     if (!L) return { ok: false, done: true };
@@ -185,6 +185,11 @@
     const ra = reviewAccuracy(pr);
     const reviewOk = pr.unlocked === 1 || ra === null || ra >= GATE.review;
     return { ok: s.pct >= GATE.overall && kindsOk && reviewOk, pct: s.pct, kindsOk, reviewOk, reviewAcc: ra, stats: s, last: pr.unlocked >= lessons.length };
+  }
+  /** Learner chooses to move on before the gate is met — unmastered cards stay in review. */
+  function forceAdvance(pr, lessons) {
+    if (pr.unlocked < lessons.length) { pr.unlocked++; return true; }
+    return false;
   }
   function maybeAdvance(pr, lessons) {
     const g = gateStatus(pr, lessons);
@@ -236,8 +241,10 @@
     const req = masteryRequirement(pr);
     const size = set.sessionSize || 12;
     const cur = model.lessons[pr.unlocked - 1] || model.lessons[model.lessons.length - 1];
-    const curIds = kinds.flatMap(k => cur[k]);
-    const prevIds = model.lessons.slice(0, pr.unlocked - 1).flatMap(L => kinds.flatMap(k => L[k]));
+    // category / phrase-group practice: any card in that set, regardless of lesson
+    const catSet = /^(cat|grp):/.test(scope) ? ((scope.startsWith('cat:') ? model.categories : model.groups) || []).find(c => c.key === scope.slice(4)) : null;
+    let curIds = catSet ? catSet.ids.slice() : kinds.flatMap(k => cur[k]);
+    let prevIds = catSet ? [] : model.lessons.slice(0, pr.unlocked - 1).flatMap(L => kinds.flatMap(k => L[k]));
 
     // --- review candidates: anything introduced from earlier lessons (+ current lesson items in review mode)
     const reviewPoolIds = scope === 'review' ? prevIds.concat(curIds) : prevIds;
@@ -369,7 +376,7 @@
 
   root.ENGINE = {
     Store, storage, st, peek, record, markIntroduced, skill, reviewAccuracy, masteryRequirement, isMastered, itemStatus,
-    lessonStats, gateStatus, maybeAdvance, chooseExercise, buildSession, requeueMiss, touchStreak, dayKey,
+    lessonStats, gateStatus, maybeAdvance, forceAdvance, chooseExercise, buildSession, requeueMiss, touchStreak, dayKey,
     INTERVALS, GATE, PROFILE_DEFAULTS, _setClock(fn) { clock = fn || (() => Date.now()); }
   };
 })(typeof window !== 'undefined' ? window : globalThis);

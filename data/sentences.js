@@ -36,17 +36,17 @@ window.SENTENCES = {
   //  t thing · fx fixed thing · an animal · pe person · b body part · pl place · f food · me/md mass eat/drink
   //  m mass · np plural noun · adj adjective · adj1 adjective without "very" · v verb (infinitive)
   classes: {
-    t: ['ball', 'basket', 'boat', 'chair', 'flower', 'key', 'knife', 'pen', 'shoe', 'leaf', 'book', 'box', 'bell', 'bed', 'letter'],
+    t: ['ball', 'basket', 'boat', 'chair', 'flower', 'key', 'knife', 'pen', 'shoe', 'leaf', 'book', 'box', 'bell', 'bed', 'letter', 'phone', 'bag', 'cup', 'glass', 'plate', 'spoon', 'clock', 'car', 'soap', 'towel', 'toothbrush', 'umbrella', 'blanket', 'pillow'],
     fx: ['door', 'moon', 'sky', 'star', 'sun', 'table', 'tree', 'window', 'bus'],
-    an: ['bird', 'cat', 'cow', 'dog', 'fish', 'horse', 'monkey', 'parrot', 'snake', 'bear'],
-    pe: ['baby', 'doctor', 'girl', 'king', 'queen', 'teacher', 'woman', 'boy', 'man'],
-    b: ['arm', 'ear', 'eye', 'face', 'foot', 'hand', 'head', 'heart', 'mouth', 'nose', 'tooth', 'bone'],
-    pl: ['city', 'kitchen', 'river', 'road', 'school', 'village', 'zoo', 'garden'],
-    f: ['apple', 'egg', 'fruit', 'mango', 'potato', 'vegetable', 'chocolate', 'bread'],
-    me: ['rice'], md: ['milk', 'juice', 'tea'], m: ['ice'], np: ['clothes', 'money'],
-    adj: ['brave', 'bad', 'beautiful', 'big', 'blue', 'clean', 'cold', 'fast', 'good', 'green', 'hot', 'little', 'new', 'old', 'red', 'sweet', 'white', 'yellow'],
+    an: ['bird', 'cat', 'cow', 'dog', 'fish', 'horse', 'monkey', 'parrot', 'snake', 'bear', 'goat', 'hen', 'elephant', 'lion', 'mouse'],
+    pe: ['baby', 'doctor', 'girl', 'king', 'queen', 'teacher', 'woman', 'boy', 'man', 'son', 'daughter', 'husband', 'wife', 'neighbour', 'guest'],
+    b: ['arm', 'ear', 'eye', 'face', 'foot', 'hand', 'head', 'heart', 'mouth', 'nose', 'tooth', 'bone', 'leg', 'finger', 'stomach', 'back'],
+    pl: ['city', 'kitchen', 'river', 'road', 'school', 'village', 'zoo', 'garden', 'room', 'bathroom', 'shop', 'market', 'gurdwara', 'hospital', 'park'],
+    f: ['apple', 'egg', 'fruit', 'mango', 'potato', 'vegetable', 'chocolate', 'bread', 'banana', 'onion'],
+    me: ['rice', 'lentils', 'yogurt', 'paneer'], md: ['milk', 'juice', 'tea'], m: ['ice', 'sugar', 'salt', 'butter'], np: ['clothes', 'money'], day: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'],
+    adj: ['brave', 'black', 'pink', 'brown', 'purple', 'grey', 'dirty', 'slow', 'bad', 'beautiful', 'big', 'blue', 'clean', 'cold', 'fast', 'good', 'green', 'hot', 'little', 'new', 'old', 'red', 'sweet', 'white', 'yellow'],
     adj1: ['better'],
-    v: ['jump', 'laugh', 'play', 'run', 'sleep', 'walk', 'write', 'eat', 'drink']
+    v: ['jump', 'laugh', 'play', 'run', 'sleep', 'walk', 'write', 'eat', 'drink', 'read', 'speak', 'cook']
   },
 
   // Pattern sentences. X = the word. Each lists which classes it works for.
@@ -61,7 +61,8 @@ window.SENTENCES = {
     { id: 'likemass', pa: 'ਮੈਨੂੰ X ਪਸੰਦ ਹੈ', rom: 'mainu X pasand hai', gloss: 'to me|X|liked|is', en: 'I like {x}.', cls: ['me', 'md'] },
     { id: 'likeverb', pa: 'ਮੈਨੂੰ X ਪਸੰਦ ਹੈ', rom: 'mainu X pasand hai', gloss: 'to me|X|liked|is', en: 'I like to {x}.', cls: ['v'] },
     { id: 'eat', pa: 'X ਖਾਓ', rom: 'X khao', gloss: 'X|eat', en: 'Eat the {x}.', cls: ['f', 'me'] },
-    { id: 'drink', pa: 'X ਪੀਓ', rom: 'X peeo', gloss: 'X|drink', en: 'Drink the {x}.', cls: ['md'] }
+    { id: 'drink', pa: 'X ਪੀਓ', rom: 'X peeo', gloss: 'X|drink', en: 'Drink the {x}.', cls: ['md'] },
+    { id: 'today', pa: 'ਅੱਜ X ਹੈ', rom: 'ujj X hai', gloss: 'today|X|is', en: 'Today is {x}.', cls: ['day'] }
   ],
 
   sentences: [
@@ -144,7 +145,29 @@ window.SENTENCES = {
     ['ਬੀਜ ਜ਼ਮੀਨ ਵਿੱਚ ਹੈ', 'beej zameen vich hai', 'seed|ground|in|is', 'The seed is in the ground.', 'v:seed', 0, ['ਬੱਸ', 'ਘੰਟੀ']],
     ['ਬੱਚੇ ਜ਼ਮੀਨ ਉੱਤੇ ਬੈਠੇ ਹਨ', 'bachche zameen utte baithe han', 'children|ground|on|sitting|are', 'The children are sitting on the ground.', 'v:ground', 1, ['ਬਿਸਤਰਾ', 'ਅਸਮਾਨ']],
     ['ਇਹ ਕੀ ਚੀਜ਼ ਹੈ?', 'eh kee cheez hai', 'this|what|thing|is?', 'What is this thing?', 'v:thing', 2, ['ਕਹਾਣੀ', 'ਸਮਾਂ']],
-    ['ਮੇਰਾ ਦੋਸਤ ਇੱਥੇ ਹੈ', 'mera dost ithe hai', 'my|friend|here|is', 'My friend is here.', 'v:friend', 1, ['ਮੁੰਡਾ', 'ਰਾਜਾ']]
+    ['ਮੇਰਾ ਦੋਸਤ ਇੱਥੇ ਹੈ', 'mera dost ithe hai', 'my|friend|here|is', 'My friend is here.', 'v:friend', 1, ['ਮੁੰਡਾ', 'ਰਾਜਾ']],
+    ['ਇਹ ਕੀ ਹੈ?', 'eh kee hai', 'this|what|is?', 'What is this?', 'v:what', 1, ['ਕੌਣ', 'ਕਿੱਥੇ']],
+    ['ਉਹ ਕੌਣ ਹੈ?', 'oh kaun hai', 'he / she / that|who|is?', 'Who is that?', 'v:who', 1, ['ਕੀ', 'ਕਦੋਂ']],
+    ['ਮੰਮੀ ਕਿੱਥੇ ਹੈ?', 'mummy kith-ay hai', 'mom|where|is?', 'Where is Mom?', 'v:where', 1, ['ਕੌਣ', 'ਕਿਉਂ']],
+    ['ਤੁਸੀਂ ਕਦੋਂ ਆਓਗੇ?', 'tusi(n) ka-do(n) aaoge', 'you|when|will come', 'When will you come?', 'v:when', 1, ['ਕਿੱਥੇ', 'ਕੀ']],
+    ['ਤੁਸੀਂ ਕਿਉਂ ਰੋ ਰਹੇ ਹੋ?', 'tusi(n) kyo(n) ro rahe ho', 'you|why|cry|-ing|are?', 'Why are you crying?', 'v:why', 1, ['ਕਿਵੇਂ', 'ਕੌਣ']],
+    ['ਤੁਸੀਂ ਕਿਵੇਂ ਹੋ?', 'tusi(n) ki-vay(n) ho', 'you|how|are?', 'How are you?', 'v:how', 1, ['ਕਿਉਂ', 'ਕੀ']],
+    ['ਇਹ ਕਿੰਨੇ ਦਾ ਹੈ?', 'eh kinne da hai', 'this|how much|of|is?', 'How much is this?', 'v:how much', 1, ['ਕਿੱਥੇ', 'ਕੌਣ']],
+    ['ਕਿਹੜਾ ਰੰਗ?', 'keh-raa rung', 'which|color', 'Which color?', 'v:which', 0, ['ਕੌਣ', 'ਕਦੋਂ']],
+    ['ਮੈਨੂੰ ਦੋ ਰੋਟੀਆਂ ਦਿਓ', 'mainu do rotiaan dio', 'to me|two|rotis|give', 'Give me two rotis.', 'v:two', 1, ['ਤਿੰਨ', 'ਪੰਜ']],
+    ['ਮੇਰੇ ਕੋਲ ਤਿੰਨ ਕਿਤਾਬਾਂ ਹਨ', 'mere kol tinn kitaabaan han', 'my|near (= have)|three|books|are', 'I have three books.', 'v:three', 2, ['ਚਾਰ', 'ਦੋ']],
+    ['ਪੰਜ ਮਿੰਟ ਰੁਕੋ', 'punj mint ruko', 'five|minutes|wait', 'Wait five minutes.', 'v:five', 0, ['ਦਸ', 'ਛੇ']],
+    ['ਦਸ ਵੱਜ ਗਏ ਹਨ', 'dus vajj gaye han', 'ten|struck (o\'clock)|gone|are', "It's ten o'clock.", 'v:ten', 0, ['ਨੌਂ', 'ਸੱਤ']],
+    ['ਮੈਨੂੰ ਥੋੜ੍ਹਾ ਪਾਣੀ ਦਿਓ', 'mainu tho-raa paani dio', 'to me|a little|water|give', 'Give me a little water.', 'v:a little', 1, ['ਬਹੁਤ', 'ਹੁਣ']],
+    ['ਉਹ ਬਹੁਤ ਥੱਕਿਆ ਹੈ', 'oh bahut thakkiaa hai', 'he|very|tired|is', 'He is very tired.', 'v:tired', 2, ['ਭੁੱਖਾ', 'ਖ਼ੁਸ਼']],
+    ['ਮੈਂ ਕਿਤਾਬ ਪੜ੍ਹ ਰਿਹਾ ਹਾਂ', 'main kitaab parh riha haan', 'I|book|read|-ing (m)|am', 'I am reading a book.', 'v:read', 2, ['ਲਿਖ', 'ਖਾ']],
+    ['ਪੰਜਾਬੀ ਬੋਲੋ', 'punjaabi bolo', 'Punjabi|speak', 'Speak Punjabi.', 'v:speak', 1, ['ਲਿਖੋ', 'ਖਾਓ']],
+    ['ਦੁਕਾਨ ਨੇੜੇ ਹੈ', 'dukaan nay-ray hai', 'shop|near|is', 'The shop is near.', 'v:near', 1, ['ਦੂਰ', 'ਉੱਪਰ']],
+    ['ਸਕੂਲ ਦੂਰ ਹੈ', 'skool door hai', 'school|far|is', 'The school is far.', 'v:far', 1, ['ਨੇੜੇ', 'ਅੰਦਰ']],
+    ['ਇੱਥੇ ਆਓ', 'ith-ay aao', 'here|come', 'Come here.', 'v:here', 0, ['ਉੱਥੇ', 'ਹੁਣ']],
+    ['ਉੱਥੇ ਬੈਠੋ', 'uth-ay baitho', 'there|sit', 'Sit there.', 'v:there', 0, ['ਇੱਥੇ', 'ਕੱਲ੍ਹ']],
+    ['ਗੁਰਦੁਆਰੇ ਚੱਲੀਏ', 'gurduaare challiye', 'to the gurdwara|let\'s go', "Let's go to the gurdwara.", 'v:gurdwara', 0, ['ਸਕੂਲ', 'ਬਜ਼ਾਰ']],
+    ['ਬੱਚਾ ਪਿਆਸਾ ਹੈ', 'bachaa pyaa-saa hai', 'child|thirsty|is', 'The child is thirsty.', 'v:thirsty', 1, ['ਭੁੱਖਾ', 'ਥੱਕਿਆ']]
   ],
 
   conversations: [
