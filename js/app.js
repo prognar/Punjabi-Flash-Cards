@@ -274,9 +274,17 @@
     if (PT.stage === 'words') {
       if (PT.block.length) { PT.q = PT.block.shift(); return render(); }
       // block finished
+      // perfect blocks skip ahead; if a block after a skip isn't passed, go back and test the skipped lessons one by one
+      if (PT.blockRight < 3 && PT.jumped && PT.lesson > PT.passed + 1) {
+        PT.lesson = PT.passed + 1; PT.jumped = false; PT.noJump = true; PT.perfect = 0;
+        PT.block = ptBlock(PT.lesson); PT.blockRight = 0; return ptNext();
+      }
       if (PT.blockRight >= 3) PT.passed = PT.lesson; else if (PT.blockRight === 2) PT.strikes++; else PT.strikes = 2;
+      PT.perfect = PT.blockRight >= 4 && !PT.strikes && !PT.noJump ? (PT.perfect || 0) + 1 : 0;
+      const step = PT.perfect >= 2 ? 3 : PT.perfect ? 2 : 1;
       if (PT.strikes >= 2 || PT.lesson >= lessons.length) { PT.stage = 'result'; return render(); }
-      PT.lesson++; PT.block = ptBlock(PT.lesson); PT.blockRight = 0;
+      PT.jumped = step > 1;
+      PT.lesson = Math.min(lessons.length, PT.lesson + step); PT.block = ptBlock(PT.lesson); PT.blockRight = 0;
       return ptNext();
     }
     render();
@@ -320,7 +328,9 @@
         <div class="options">${opts.map((o, i) => `<button class="opt ${o.cls || ''}" data-i="${i}">${o.html}</button>`).join('')}</div>
         <div class="actions"><button class="btn ghost" data-act="idk">🤷 I don't know</button></div>
       </div>`;
+    let done = false;
     const answer = ok => {
+      if (done) return; done = true; // ignore double taps
       PT.answered++;
       if (inLetters) { if (ok) PT.letterRight++; }
       else { if (ok) { PT.blockRight++; PT.right.push(q.id); } else PT.wrong.push(q.id); }
@@ -977,5 +987,5 @@
   const act = Store.active();
   if (act) { P = act; PR = Store.progress(act.id); E.touchStreak(PR); route = { name: 'home' }; }
   render();
-  window.__APP = { go, get P() { return P; }, get PR() { return PR; }, get SES() { return SES; } }; // for debugging/tests
+  window.__APP = { go, get P() { return P; }, get PR() { return PR; }, get SES() { return SES; }, get PT() { return PT; } }; // for debugging/tests
 })();

@@ -15,6 +15,15 @@ Speech recognition needs Chrome or Edge. Microphone access needs `https://` or `
 
 Lesson sizes are set in `perLesson` in `data/content.js`.
 
+**What's in it (38 lessons):** 35 letters, 760 words in 22 categories, 288 phrases in 21 groups.
+- **Lessons 1–15**: the teacher's sheet plus everyday basics.
+- **Lessons 15–38 (batch 2)**: one theme per lesson. The themes are:
+  - Little words (I, you, my, and, in…)
+  - Gurdwara ×3 (basics; prayers; Khalsa, the 5 Ks and festivals)
+  - Action words ×3, Family and in-laws, Numbers to 100,000, Food ×2, Feelings, Conversation words, Time, Around the house, Clothes, Health, Shopping & money, Getting around, Describing words, School & work, Weather & animals, Places, Colors & small creatures
+- **Phrases in batch 2**: Meeting people, At the Gurdwara, Visiting family, Meals, Daily routine, Chatting, Feeling & health, Shopping, Directions & travel, School, Phone & celebrations.
+- **Gendered phrases** ("I am learning…", "I'm tired"…) show the man's form and accept the woman's. The card's note shows both.
+
 ## Learners
 - Each learner has a **Kid** or **Adult** profile:
   - **Kid:** 12-card sessions, more forgiving speech and writing checks, more celebration.
@@ -29,7 +38,9 @@ Lesson sizes are set in `perLesson` in `data/content.js`.
 ## Placement test
 New learners are offered a placement test right after their profile is created. It's also on the home screen until they've seen 40 cards, and in Options ("🧭 Take it").
 - **Letters**: 8 quick letter questions. 6 or more right marks the whole alphabet as known.
-- **Lessons**: 4 questions per lesson (3 words + 1 phrase). 3 right passes the lesson and the test moves on to the next one. It stops at a clear fail (1 or fewer right) or at a second borderline result (2 right).
+- **Lessons**: 4 questions per lesson (3 words + 1 phrase). 3 right passes the lesson.
+  - **Skipping ahead**: a perfect block skips a lesson, and two perfect blocks in a row skip two. If the block after a skip isn't passed, the test goes back and checks the skipped lessons one by one.
+  - **Stopping**: the test stops at a clear fail (1 or fewer right) or at a second borderline result (2 right).
 - **"I don't know"**: there's a button for it, so guesses don't inflate the result.
 - **Result**: the suggested starting lesson (you can change it), letters known, words right, and lessons passed. Cards in earlier lessons count as seen and come back in review over the following week.
 
@@ -65,7 +76,7 @@ New learners are offered a placement test right after their profile is created. 
 - **Tap any word in a sentence** to see its meaning.
 - **Repetition**: each word being learned comes back 2–3 times per session, each time in a different exercise. Slips on those repeat cards cost less than a fresh miss.
 - **Pattern sentences**: built automatically for each word from its class (thing, animal, food, adjective, verb…). For example, "Where is the ___?", "Give me the ___", "I like ___". Hand-written sentences cover the rest.
-- **Coverage**: about 130 of 150 words and 84 of 104 phrases have sentences; the rest use the flash-card style exercises.
+- **Coverage**: about 1,250 practice sentences. Words without one use the flash-card style exercises.
 - **All sentence Punjabi was written for the app** — have the teacher check it.
 
 ## Admin console (admin.html)
