@@ -42,14 +42,16 @@
   function render() {
     S.stop();
     if (route.name !== 'profiles' && route.name !== 'editProfile' && !P) route = { name: 'profiles' };
-    const views = { profiles: vProfiles, editProfile: vEditProfile, home: vHome, cats: vCats, session: vSession, summary: vSummary, progress: vProgress, browse: vBrowse, settings: vSettings };
+    const views = { profiles: vProfiles, editProfile: vEditProfile, home: vHome, cats: vCats, placement: vPlacement, session: vSession, summary: vSummary, progress: vProgress, browse: vBrowse, settings: vSettings };
     (views[route.name] || vProfiles)();
   }
 
   function selectProfile(id) {
     P = Store.profile(id); Store.setActive(id);
     PR = Store.progress(id); E.touchStreak(PR);
+    const opened = E.weeklyUnlock(PR, P, lessons); save();
     go('home');
+    if (opened) toast(`New week — lesson ${PR.unlocked} is open 🎉`);
   }
 
   // ------------------------------------------------------------ profiles
@@ -104,6 +106,8 @@
           ${toggleRow('showRoman', 'Show English-letter spelling', f.settings)}
           ${toggleRow('speech', 'Speaking practice (microphone)', f.settings)}
           ${toggleRow('writing', 'Letter writing practice', f.settings)}
+          ${toggleRow('weekly', 'Follow a weekly class (open a new lesson every 7 days)', f.settings)}
+          ${existing ? '<div class="toggle"><span>Placement test</span><button class="btn" data-act="placement">🧭 Take it</button></div>' : ''}
           <div class="toggle"><span>After a correct answer</span><select id="an" class="input" style="width:auto">${[[0, 'Wait for Next'], [3, 'Next in 3 s'], [5, 'Next in 5 s'], [8, 'Next in 8 s']].map(([v, l]) => `<option value="${v}" ${v === (+f.settings.autoNext || 0) ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
           <div class="toggle"><span>Cards per session</span><select id="ss" class="input" style="width:auto">${[8, 12, 16, 20, 30].map(n => `<option ${n === f.settings.sessionSize ? 'selected' : ''}>${n}</option>`).join('')}</select></div>
         </div>
@@ -120,10 +124,11 @@
       startLesson = +document.getElementById('sl').value;
       const a = b.dataset.act;
       if (a === 'back') return go(existing ? 'home' : 'profiles');
+      if (a === 'placement') { startPlacement(false); return; }
       if (a === 'av') { f.avatar = b.dataset.v; draw(); }
       if (a === 'type') {
         f.type = b.dataset.v;
-        const d = E.PROFILE_DEFAULTS[f.type]; f.settings.sessionSize = d.sessionSize; f.settings.maxNew = d.maxNew;
+        const d = E.PROFILE_DEFAULTS[f.type]; f.settings.sessionSize = d.sessionSize; f.settings.maxNew = d.maxNew; f.settings.dailyGoal = d.dailyGoal;
         draw();
       }
       if (a === 'del' && confirm(`Delete ${existing.name} and all their progress?`)) { Store.deleteProfile(existing.id); P = null; go('profiles'); }
@@ -139,6 +144,7 @@
         pr2.unlocked = Math.max(1, Math.min(lessons.length, startLesson));
         Store.saveProgress(id, pr2);
         selectProfile(id);
+        if (!existing && startLesson === 1) startPlacement(true);
       }
     };
   }
@@ -154,6 +160,7 @@
     const s = g.stats || E.lessonStats(PR, L);
     const sk = E.skill(PR), req = E.masteryRequirement(PR), streak = E.touchStreak(PR).streak;
     const due = dueCount();
+    const xpT = E.xpToday(PR), goal = P.settings.dailyGoal || (isKid() ? 100 : 150), known = E.knownCounts(PR, window.MODEL);
     const sec = (k, ico, cls, title, preview) => {
       const ks = s.kinds[k]; if (!ks.total) return '';
       return `<div class="card section">
@@ -179,6 +186,12 @@
         <span class="spacer"></span>
         <button class="icon-btn" data-act="switch" title="Switch learner" aria-label="Switch learner">👥</button>
       </div>
+      <div class="goal card">
+        <div class="row"><b>Today's goal</b><span class="spacer"></span><span class="${xpT >= goal ? 'goal-done' : 'muted'}">${xpT >= goal ? '✓ done! ' : ''}${xpT} / ${goal} XP</span></div>
+        <div class="bar"><i style="width:${Math.min(100, Math.round(xpT / goal * 100))}%; background: var(--gold)"></i></div>
+        <div class="row small muted" style="margin-top:6px"><span>📖 ${known.vocab} words</span><span>💬 ${known.phrase} phrases</span><span>ੳ ${known.letter} letters</span><span class="spacer"></span><span>you know</span></div>
+      </div>
+      ${!PR.placement && Object.values(PR.items).filter(x => x.intro).length < 40 ? `<div class="card row cta"><div style="font-size:30px">🧭</div><div class="meta" style="flex:1"><b>Already know some Punjabi?</b><div class="muted small">Take the placement test to skip what you know.</div></div><button class="btn teal" data-act="placement">Take test</button></div>` : ''}
       <div class="hero stack">
         <div class="lesson-no">Lesson ${L.n} of ${lessons.length}</div>
         <h1>${L.letter.length ? `<span class="gur">${L.letter.map(id => items[id].glyph).join(' ')}</span> · ` : ''}${L.vocab.length} words · ${L.phrase.length} phrases</h1>
@@ -204,7 +217,7 @@
         </div>
       </div>
       <div class="grid3" style="margin-top:16px">
-        <div class="stat"><b>${Object.values(PR.items).filter(x => x.intro).length}</b><span class="muted small">seen</span></div>
+        <div class="stat"><b>${known.vocab + known.phrase}</b><span class="muted small">words &amp; phrases known</span></div>
         <div class="stat"><b>${sk.n >= 8 ? Math.round(sk.acc * 100) + '%' : '—'}</b><span class="muted small">recent accuracy</span></div>
         <div class="stat"><b>${cap(req.label)}</b><span class="muted small">mastery pace</span></div>
       </div>
@@ -222,11 +235,130 @@
       if (a === 'browse') go('browse', { lesson: PR.unlocked, kind: 'letter' });
       if (a === 'edit') go('editProfile', { id: P.id });
       if (a === 'cats') go('cats');
+      if (a === 'placement') startPlacement(false);
       if (a === 'next') {
         const st = E.lessonStats(PR, L);
         if (!confirm(`Start lesson ${L.n + 1}?\n\n${st.mastered} of ${st.total} cards in lesson ${L.n} are mastered. The rest keep coming back in review, so nothing is lost.`)) return;
         E.forceAdvance(PR, lessons); save(); toast(`Lesson ${PR.unlocked} unlocked 🎉`); render();
       }
+    };
+  }
+
+  // ------------------------------------------------------------ placement test
+  /*
+   * Adaptive placement: a short letter check, then 4 questions per lesson (3 words + 1 phrase).
+   * 3+ right passes the lesson and moves on; the test stops after a clear fail (≤1) or a second borderline (2).
+   * "I don't know" is encouraged so guesses don't inflate the result.
+   */
+  let PT = null;
+  function startPlacement(fromSignup) {
+    PT = { fromSignup: !!fromSignup, stage: 'intro', q: null, letterQs: [], letterRight: 0, lesson: 1, block: [], blockRight: 0,
+      passed: 0, strikes: 0, right: [], wrong: [], answered: 0, lettersKnown: false };
+    go('placement');
+  }
+  function ptLetterQs() {
+    return shuffle(order.letter).slice(0, 8).map((id, i) => ({ id, type: i % 2 ? 'glyph2name' : 'name2glyph' }));
+  }
+  function ptBlock(n) {
+    const L = lessons[n - 1]; if (!L) return [];
+    const v = shuffle(L.vocab).slice(0, 3), p = shuffle(L.phrase).slice(0, 1);
+    return shuffle(v.concat(p)).map((id, i) => ({ id, type: i % 2 ? 'pa2en' : 'en2pa' }));
+  }
+  function ptNext() {
+    if (!PT || route.name !== 'placement') return;
+    if (PT.stage === 'letters') {
+      if (PT.letterQs.length) { PT.q = PT.letterQs.shift(); return render(); }
+      PT.lettersKnown = PT.letterRight >= 6;
+      PT.stage = 'words'; PT.block = ptBlock(1); PT.blockRight = 0; PT.lesson = 1;
+    }
+    if (PT.stage === 'words') {
+      if (PT.block.length) { PT.q = PT.block.shift(); return render(); }
+      // block finished
+      if (PT.blockRight >= 3) PT.passed = PT.lesson; else if (PT.blockRight === 2) PT.strikes++; else PT.strikes = 2;
+      if (PT.strikes >= 2 || PT.lesson >= lessons.length) { PT.stage = 'result'; return render(); }
+      PT.lesson++; PT.block = ptBlock(PT.lesson); PT.blockRight = 0;
+      return ptNext();
+    }
+    render();
+  }
+  function vPlacement() {
+    if (!PT) return go('home');
+    if (PT.stage === 'intro') {
+      app.innerHTML = `
+        <div class="topbar"><button class="icon-btn" data-act="skip" aria-label="Close">✕</button><h2>Placement test</h2></div>
+        <div class="card stack">
+          <div class="emoji-xl" style="text-align:center">🧭</div>
+          <h2 style="text-align:center">Find ${esc(P.name)}'s starting lesson</h2>
+          <p>A few quick questions — Gurmukhi letters, then words and phrases from each lesson, getting harder as you go. It stops on its own when it finds the right level (usually 2–5 minutes).</p>
+          <p><b>Tap “I don't know”</b> instead of guessing — guesses put you in a lesson that's too hard.</p>
+          <p class="muted small">Words you already know are marked as seen, so they show up in review instead of being taught from scratch.</p>
+        </div>
+        <div class="actions"><button class="btn" data-act="skip">${PT.fromSignup ? "I'm a beginner — start at lesson 1" : 'Not now'}</button><button class="btn primary big" data-act="go">Start the test</button></div>`;
+      app.onclick = e => {
+        const b = e.target.closest('[data-act]'); if (!b) return;
+        if (b.dataset.act === 'skip') { PT = null; go('home'); }
+        if (b.dataset.act === 'go') { PT.stage = 'letters'; PT.letterQs = ptLetterQs(); ptNext(); }
+      };
+      return;
+    }
+    if (PT.stage === 'result') return vPlacementResult();
+    const q = PT.q, it = items[q.id];
+    const inLetters = PT.stage === 'letters';
+    const step = inLetters ? `Letters · ${8 - PT.letterQs.length} of 8` : `Lesson ${PT.lesson} of ${lessons.length}`;
+    const pct = inLetters ? (8 - PT.letterQs.length) / 8 * 15 : 15 + (PT.lesson - 1) / lessons.length * 85;
+    let prompt, opts, label;
+    if (q.type === 'name2glyph') { label = 'Which letter is this?'; prompt = `<div class="en-prompt"><span class="gur">${esc(it.name)}</span> · ${esc(it.rom)}</div>`; opts = shuffle([it].concat(distractors(it, 3, 'glyph'))).map(o => ({ id: o.id, html: `<span class="gur">${esc(o.glyph)}</span>`, cls: 'glyph' })); }
+    else if (q.type === 'glyph2name') { label = 'What is this letter called?'; prompt = `<div class="glyph-xl">${esc(it.glyph)}</div>`; opts = shuffle([it].concat(distractors(it, 3, 'rom'))).map(o => ({ id: o.id, html: `<span class="gur">${esc(o.name)}</span><span class="rom">${esc(o.rom)}</span>` })); }
+    else if (q.type === 'en2pa') { label = 'How do you say this in Punjabi?'; prompt = `<div class="en-prompt">${esc(it.en)}</div>`; opts = shuffle([it].concat(distractors(it, 3, 'pa'))).map(o => ({ id: o.id, html: `<span class="gur">${esc(o.pa)}</span><span class="rom">${esc(o.rom)}</span>` })); }
+    else { label = 'What does this mean?'; prompt = `${paHTML(it, 'xl')}<button class="btn ghost" data-hear>🔊 Hear it</button>`; opts = shuffle([it].concat(distractors(it, 3, 'en'))).map(o => ({ id: o.id, html: esc(o.en) })); }
+    app.innerHTML = `
+      <div class="progress-top"><button class="icon-btn" data-act="stop" aria-label="Stop">✕</button><div class="bar"><i style="width:${Math.round(pct)}%"></i></div></div>
+      <div class="ex">
+        <div class="prompt-label">${esc(step)}</div>
+        <div class="muted" style="margin-top:4px">${label}</div>
+        <div class="prompt">${prompt}</div>
+        <div class="options">${opts.map((o, i) => `<button class="opt ${o.cls || ''}" data-i="${i}">${o.html}</button>`).join('')}</div>
+        <div class="actions"><button class="btn ghost" data-act="idk">🤷 I don't know</button></div>
+      </div>`;
+    const answer = ok => {
+      PT.answered++;
+      if (inLetters) { if (ok) PT.letterRight++; }
+      else { if (ok) { PT.blockRight++; PT.right.push(q.id); } else PT.wrong.push(q.id); }
+      setTimeout(ptNext, ok === null ? 0 : 350);
+    };
+    app.onclick = e => {
+      const b = e.target.closest('[data-act]');
+      if (b && b.dataset.act === 'stop') { if (confirm('Stop the test? You can take it again from Options.')) { PT.stage = 'result'; render(); } return; }
+      if (b && b.dataset.act === 'idk') { answer(false); return; }
+      if (e.target.closest('[data-hear]')) { speak(it); return; }
+      const o = e.target.closest('.opt'); if (!o || o.disabled) return;
+      const ok = opts[+o.dataset.i].id === it.id;
+      app.querySelectorAll('.opt').forEach(x => { x.disabled = true; });
+      o.classList.add('picked');
+      answer(ok);
+    };
+  }
+  function vPlacementResult() {
+    const start = Math.min(lessons.length, PT.passed + 1);
+    const acc = PT.right.length + PT.wrong.length ? Math.round(PT.right.length / (PT.right.length + PT.wrong.length) * 100) : 0;
+    app.innerHTML = `
+      <div class="celebrate"><div class="big-emoji">🎯</div><h1>Start at lesson ${start}</h1>
+        <p class="muted">${PT.passed ? `${esc(P.name)} already knows most of lessons 1–${PT.passed}.` : 'Lesson 1 is the right place to begin.'}</p></div>
+      <div class="card stack">
+        <div class="row"><b>Gurmukhi letters</b><span class="spacer"></span>${PT.letterRight}/8 ${PT.lettersKnown ? '<span class="pill mastered">reads letters</span>' : '<span class="pill learning">will learn</span>'}</div>
+        <div class="row"><b>Words &amp; phrases</b><span class="spacer"></span>${PT.right.length} right · ${PT.wrong.length} not yet (${acc}%)</div>
+        <div class="row"><b>Lessons passed</b><span class="spacer"></span>${PT.passed} of ${lessons.length}</div>
+        <div class="field"><label for="ptl">Starting lesson</label>
+          <select id="ptl" class="input">${lessons.map(L => `<option value="${L.n}" ${L.n === start ? 'selected' : ''}>Lesson ${L.n}${L.n === start ? ' (recommended)' : ''}</option>`).join('')}</select></div>
+        <p class="muted small">Earlier lessons count as seen and come back in review over the next week, so anything shaky gets caught.</p>
+      </div>
+      <div class="actions"><button class="btn" data-act="cancel">Keep current lesson</button><button class="btn primary big" data-act="apply">Start here →</button></div>`;
+    app.onclick = e => {
+      const b = e.target.closest('[data-act]'); if (!b) return;
+      if (b.dataset.act === 'cancel') { PT = null; go('home'); return; }
+      const lesson = +document.getElementById('ptl').value;
+      E.applyPlacement(PR, window.MODEL, { lesson, lettersKnown: PT.lettersKnown, rightIds: PT.right, wrongIds: PT.wrong, score: acc / 100 });
+      save(); PT = null; toast(`Starting at lesson ${lesson} 🎉`); go('home');
     };
   }
 
@@ -257,7 +389,7 @@
   function startSession(scope) {
     const { queue, info } = E.buildSession(PR, P, window.MODEL, scope);
     if (!queue.length) { toast('Nothing to practice here right now 🎉'); return; }
-    SES = { scope, queue, pos: 0, info, right: 0, wrong: 0, missed: new Set(), answered: false, startUnlocked: PR.unlocked,
+    SES = { scope, queue, pos: 0, info, right: 0, wrong: 0, missed: new Set(), answered: false, startUnlocked: PR.unlocked, startXp: E.xpToday(PR),
       startBoxes: Object.fromEntries(Object.entries(PR.items).map(([id, x]) => [id, x.box])), startMastered: E.lessonStats(PR, lessons[PR.unlocked - 1]).mastered };
     go('session');
   }
@@ -698,12 +830,14 @@
     const s = SES || { right: 0, wrong: 0, missed: new Set() };
     const total = s.right + s.wrong, pct = total ? s.right / total : 0;
     const missed = [...(s.missed || [])].map(id => items[id]);
+    const xpGain = Math.max(0, E.xpToday(PR) - (s.startXp || 0)), goalNow = P.settings.dailyGoal || (isKid() ? 100 : 150);
     if (s.advanced || pct >= 0.8) confetti();
     app.innerHTML = `
       <div class="celebrate">
         <div class="big-emoji">${s.advanced ? '🔓' : pct >= 0.9 ? '🏆' : pct >= 0.7 ? '⭐' : '💪'}</div>
         <h1>${s.advanced ? `Lesson ${PR.unlocked} unlocked!` : pct >= 0.9 ? 'Amazing!' : pct >= 0.7 ? 'Great practice!' : 'Good effort!'}</h1>
         <p class="muted">${s.right} of ${total} correct${s.advanced ? ' · new letters, words and phrases are ready' : ''}</p>
+        <p class="xp-gain">+${xpGain} XP · today ${E.xpToday(PR)} / ${goalNow}${E.xpToday(PR) >= goalNow && E.xpToday(PR) - xpGain < goalNow ? ' — daily goal reached! 🎯' : ''}</p>
       </div>
       ${(() => {
         const ups = Object.entries(PR.items).filter(([id, x]) => x.box > ((s.startBoxes || {})[id] ?? 0)).length;
@@ -753,6 +887,11 @@
         <div class="stat"><b>${sk.n >= 8 ? Math.round(sk.acc * 100) + '%' : '—'}</b><span class="muted small">recent accuracy</span></div>
         <div class="stat"><b>${ra == null ? '—' : Math.round(ra * 100) + '%'}</b><span class="muted small">review accuracy</span></div>
         <div class="stat"><b>${days}</b><span class="muted small">days practiced</span></div>
+      </div>
+      <div class="card" style="margin-top:14px"><h3>Last 7 days</h3>
+        <div class="xpchart">${(() => { const d = E.xpDays(PR, 7), mx = Math.max(P.settings.dailyGoal || 150, ...d.map(x => x.xp)); return d.map(x => `<div class="xpcol"><div class="xpbar" style="height:${Math.round(x.xp / mx * 100)}%" title="${x.xp} XP"></div><span>${['Su','Mo','Tu','We','Th','Fr','Sa'][new Date(x.day + 'T12:00').getDay()]}</span><b>${x.xp}</b></div>`).join(''); })()}</div>
+        <div class="muted small">XP per day · goal ${P.settings.dailyGoal || (isKid() ? 100 : 150)}. Cards you know (answered right at least once): ${(() => { const k = E.knownCounts(PR, window.MODEL); return `${k.vocab} words, ${k.phrase} phrases, ${k.letter} letters`; })()}.</div>
+        ${PR.placement ? `<div class="muted small">Placement test: started at lesson ${PR.placement.lesson} on ${new Date(PR.placement.at).toLocaleDateString()}.</div>` : ''}
       </div>
       <div class="card" style="margin-top:14px"><h3>Alphabet</h3><div class="muted small" style="margin-bottom:10px">Grey = not started · yellow = learning · green = mastered</div>
         <div class="letter-grid">${order.letter.map(id => `<div class="letter-cell ${E.itemStatus(PR, id, req)}" title="${esc(items[id].rom)}">${esc(items[id].glyph)}</div>`).join('')}</div></div>

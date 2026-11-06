@@ -26,6 +26,17 @@ Lesson sizes are set in `perLesson` in `data/content.js`.
 - **Practice by category**: home screen → any category (Colors, Numbers, Food & drink, Everyday items…) or phrase group. Cards there can be learned any time, even before your lessons reach them, and the progress counts toward lessons.
 - **"Class has moved on? Start lesson N"** on the home screen opens the next lesson whenever you want. Unmastered cards keep coming back in review.
 
+## Placement test
+New learners are offered a placement test right after their profile is created. It's also on the home screen until they've seen 40 cards, and in Options ("🧭 Take it").
+- **Letters**: 8 quick letter questions. 6 or more right marks the whole alphabet as known.
+- **Lessons**: 4 questions per lesson (3 words + 1 phrase). 3 right passes the lesson and the test moves on to the next one. It stops at a clear fail (1 or fewer right) or at a second borderline result (2 right).
+- **"I don't know"**: there's a button for it, so guesses don't inflate the result.
+- **Result**: the suggested starting lesson (you can change it), letters known, words right, and lessons passed. Cards in earlier lessons count as seen and come back in review over the following week.
+
+## Daily goal & weekly class
+- **XP**: +10 for a right answer, +2 for a miss, +5 for a new card. The daily goal is 150 XP for adults and 100 for kids. The home screen shows today's XP and how many words, phrases and letters you know. Progress shows the last 7 days.
+- **Weekly class**: "Follow a weekly class" (on by default) opens the next lesson every 7 days, even if the previous one isn't mastered yet.
+
 ## How review and mastery work
 - **Spacing:** each card has a level from 0 to 6.
   - A correct answer pushes the card further out: 8 hours, then 1, 3, 7, 16 and 35 days.
@@ -36,7 +47,7 @@ Lesson sizes are set in `perLesson` in `data/content.js`.
   - **Normal:** level 3 on 2 days.
   - **Struggling (under 70%):** level 3 on 3 days.
 - **Review share** in a session is 25% when strong, 40% normally and 60% when struggling. Review picks overdue, unmastered and recently missed cards first.
-- **New cards per session** are capped (4 for kids, 6 for adults). The cap is halved when a learner is struggling, and drops to 1 when 8 or more cards in the current lesson are still shaky.
+- **New cards per session** are capped (5 for kids, 8 for adults). The cap is halved when a learner is struggling, and drops to 1 when 8 or more cards in the current lesson are still shaky.
 - **Unlocking the next lesson** requires:
   - 80% of the lesson mastered,
   - at least 60% in each section, and

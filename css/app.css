@@ -239,3 +239,16 @@ canvas.pad { width: 100%; aspect-ratio: 1; background: #fff; border-radius: 22px
 .cat-tile { border: 0; background: var(--card); border-radius: 18px; padding: 14px 12px; box-shadow: var(--shadow); text-align: left; display: flex; flex-direction: column; gap: 6px; }
 .cat-tile .cat-emoji { font-size: 30px; }
 .cat-tile .cat-name { font-weight: 800; }
+
+/* ---------- daily goal / placement */
+.goal { margin-bottom: 14px; padding: 14px 16px; }
+.goal .bar { margin-top: 8px; }
+.goal-done { color: var(--teal-d); font-weight: 800; }
+.goal .row.small { gap: 10px; flex-wrap: wrap; }
+.cta { gap: 12px; margin-bottom: 14px; background: #eef8f6; }
+.xp-gain { font-weight: 800; color: #a86b00; }
+.opt.picked { border-color: #9aa5b1; background: #f1f3f5; }
+.xpchart { display: flex; gap: 8px; align-items: flex-end; height: 140px; margin: 10px 0; }
+.xpcol { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; font-size: 12px; gap: 2px; }
+.xpbar { width: 100%; background: var(--gold); border-radius: 8px 8px 3px 3px; min-height: 3px; }
+.xpcol b { font-size: 12px; color: var(--muted); }

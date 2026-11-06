@@ -13,8 +13,8 @@
   const dayKey = ts => { const d = new Date(ts); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
 
   const PROFILE_DEFAULTS = {
-    kid:   { sessionSize: 12, maxNew: 4, autoNext: 0, showGurmukhi: true, showRoman: true, speech: true, writing: true },
-    adult: { sessionSize: 20, maxNew: 6, autoNext: 0, showGurmukhi: true, showRoman: true, speech: true, writing: true }
+    kid:   { sessionSize: 12, maxNew: 5, autoNext: 0, weekly: true, dailyGoal: 100, showGurmukhi: true, showRoman: true, speech: true, writing: true },
+    adult: { sessionSize: 20, maxNew: 8, autoNext: 0, weekly: true, dailyGoal: 150, showGurmukhi: true, showRoman: true, speech: true, writing: true }
   };
 
   // ---------------------------------------------------------------- storage
@@ -61,7 +61,7 @@
     progress(id) {
       let pr = null;
       try { pr = JSON.parse(storage.get(pkey(id))); } catch (e) {}
-      return Object.assign({ items: {}, unlocked: 1, history: [], days: {}, streakDays: 0 }, pr || {});
+      return Object.assign({ items: {}, unlocked: 1, history: [], days: {}, streakDays: 0, xp: {} }, pr || {});
     },
     saveProgress(id, pr) { storage.set(pkey(id), JSON.stringify(pr)); },
     exportAll() {
@@ -88,8 +88,24 @@
   }
   const peek = (pr, id) => pr.items[id] || null;
 
+  // XP: a simple, always-moving measure of effort (Duolingo-style daily goal)
+  const XP = { right: 10, wrong: 2, intro: 5 };
+  function addXp(pr, n) { pr.xp = pr.xp || {}; const k = dayKey(now()); pr.xp[k] = (pr.xp[k] || 0) + n; }
+  const xpToday = pr => (pr.xp || {})[dayKey(now())] || 0;
+  function xpDays(pr, n = 7) {
+    const out = []; const d = new Date(now());
+    for (let i = n - 1; i >= 0; i--) { const x = new Date(d); x.setDate(d.getDate() - i); const k = dayKey(x.getTime()); out.push({ day: k, xp: (pr.xp || {})[k] || 0 }); }
+    return out;
+  }
+  /** Cards you've answered right at least once (words / phrases / letters) */
+  function knownCounts(pr, model) {
+    const c = { letter: 0, vocab: 0, phrase: 0 };
+    ['letter', 'vocab', 'phrase'].forEach(k => model.order[k].forEach(id => { const s = pr.items[id]; if (s && s.right > 0) c[k]++; }));
+    return c;
+  }
+
   function markIntroduced(pr, id) {
-    const s = st(pr, id); s.intro = true; s.last = now(); s.due = now();
+    const s = st(pr, id); if (!s.intro) addXp(pr, XP.intro); s.intro = true; s.last = now(); s.due = now();
   }
 
   /** Record an answer. Box can climb at most one step per calendar day (two on the first day),
@@ -113,6 +129,7 @@
       s.box = opts.soft ? Math.max(Math.min(s.box, 1), s.box - 1) : (s.box >= 4 ? 2 : Math.max(0, s.box - 1));
       s.due = t; s.lastWrong = t;
     }
+    addXp(pr, ok ? XP.right : XP.wrong);
     pr.history.push({ t, id, ok: !!ok, ex, r: !!isReview });
     if (pr.history.length > 600) pr.history.splice(0, pr.history.length - 600);
     const dk = dayKey(t);
@@ -188,13 +205,44 @@
   }
   /** Learner chooses to move on before the gate is met — unmastered cards stay in review. */
   function forceAdvance(pr, lessons) {
-    if (pr.unlocked < lessons.length) { pr.unlocked++; return true; }
+    if (pr.unlocked < lessons.length) { pr.unlocked++; pr.unlockedAt = now(); return true; }
     return false;
   }
   function maybeAdvance(pr, lessons) {
     const g = gateStatus(pr, lessons);
-    if (g.ok && pr.unlocked < lessons.length) { pr.unlocked++; return true; }
+    if (g.ok && pr.unlocked < lessons.length) { pr.unlocked++; pr.unlockedAt = now(); return true; }
     return false;
+  }
+  /** Follow a weekly class: a new lesson opens every 7 days even if the last one isn't mastered yet. */
+  function weeklyUnlock(pr, profile, lessons) {
+    if (!profile || !profile.settings || profile.settings.weekly === false) return 0;
+    if (!pr.unlockedAt) { pr.unlockedAt = now(); return 0; }
+    let n = 0;
+    while (pr.unlocked < lessons.length && now() - pr.unlockedAt >= 7 * DAY) { pr.unlocked++; pr.unlockedAt += 7 * DAY; n++; }
+    return n;
+  }
+
+  /**
+   * Placement test result → starting point.
+   * Cards in lessons before `lesson` are treated as already seen (reviewed over the next week);
+   * cards answered right in the test start a step further; letters marked known if the letter part was passed.
+   */
+  function applyPlacement(pr, model, { lesson, lettersKnown, rightIds = [], wrongIds = [], score }) {
+    const t = now(), today = dayKey(t);
+    const seed = (id, box) => {
+      const s = st(pr, id);
+      if (s.box >= box) return;
+      s.intro = true; s.box = box; s.boxDay = ''; s.gainsToday = 0; s.right = Math.max(s.right || 0, 1); // counts as known
+      if (!s.days.includes(today)) s.days.push(today);
+      s.last = t; s.due = t + (1 + Math.floor(Math.random() * 6)) * DAY; // spread the first reviews over the week
+    };
+    model.lessons.slice(0, lesson - 1).forEach(L => ['vocab', 'phrase'].forEach(k => L[k].forEach(id => seed(id, 2))));
+    if (lettersKnown) model.order.letter.forEach(id => { seed(id, 2); st(pr, id).writes = Math.max(st(pr, id).writes || 0, 2); });
+    rightIds.forEach(id => { seed(id, 2); const s = st(pr, id); s.right = (s.right || 0) + 1; });
+    wrongIds.forEach(id => { const s = pr.items[id]; if (s && s.box > 1) { s.box = 1; s.due = t; } });
+    pr.unlocked = Math.max(1, Math.min(model.lessons.length, lesson));
+    pr.unlockedAt = t;
+    pr.placement = { lesson: pr.unlocked, lettersKnown: !!lettersKnown, score, at: t };
   }
 
   // ---------------------------------------------------------------- exercises
@@ -376,7 +424,7 @@
 
   root.ENGINE = {
     Store, storage, st, peek, record, markIntroduced, skill, reviewAccuracy, masteryRequirement, isMastered, itemStatus,
-    lessonStats, gateStatus, maybeAdvance, forceAdvance, chooseExercise, buildSession, requeueMiss, touchStreak, dayKey,
+    lessonStats, gateStatus, maybeAdvance, forceAdvance, weeklyUnlock, applyPlacement, xpToday, xpDays, knownCounts, XP, chooseExercise, buildSession, requeueMiss, touchStreak, dayKey,
     INTERVALS, GATE, PROFILE_DEFAULTS, _setClock(fn) { clock = fn || (() => Date.now()); }
   };
 })(typeof window !== 'undefined' ? window : globalThis);
