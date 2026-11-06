@@ -36,17 +36,17 @@ window.SENTENCES = {
   //  t thing · fx fixed thing · an animal · pe person · b body part · pl place · f food · me/md mass eat/drink
   //  m mass · np plural noun · adj adjective · adj1 adjective without "very" · v verb (infinitive)
   classes: {
-    t: ['ball', 'basket', 'boat', 'chair', 'flower', 'key', 'knife', 'pen', 'shoe', 'leaf', 'book', 'box', 'bell', 'bed', 'letter', 'phone', 'bag', 'cup', 'glass', 'plate', 'spoon', 'clock', 'car', 'soap', 'towel', 'toothbrush', 'umbrella', 'blanket', 'pillow'],
-    fx: ['door', 'moon', 'sky', 'star', 'sun', 'table', 'tree', 'window', 'bus'],
-    an: ['bird', 'cat', 'cow', 'dog', 'fish', 'horse', 'monkey', 'parrot', 'snake', 'bear', 'goat', 'hen', 'elephant', 'lion', 'mouse'],
-    pe: ['baby', 'doctor', 'girl', 'king', 'queen', 'teacher', 'woman', 'boy', 'man', 'son', 'daughter', 'husband', 'wife', 'neighbour', 'guest'],
+    t: ['ball', 'basket', 'boat', 'chair', 'flower', 'key', 'knife', 'pen', 'shoe', 'leaf', 'book', 'box', 'bell', 'bed', 'letter', 'phone', 'bag', 'cup', 'glass', 'plate', 'spoon', 'clock', 'car', 'soap', 'towel', 'toothbrush', 'umbrella', 'blanket', 'pillow', 'bottle', 'bucket', 'broom', 'mirror', 'comb', 'bowl', 'cooking pot', 'paper', 'toy', 'ticket', 'ring', 'cap', 'sweater', 'coat / jacket', 'gift', 'notebook', 'bicycle', 'bangle', 'necklace', 'gutka', 'kangha', 'kara', 'kirpan', 'turban', 'patka', 'fan', 'tv', 'fridge'],
+    fx: ['door', 'moon', 'sky', 'star', 'sun', 'table', 'tree', 'window', 'bus', 'roof', 'wall', 'mountain', 'bridge', 'airplane', 'train'],
+    an: ['bird', 'cat', 'cow', 'dog', 'fish', 'horse', 'monkey', 'parrot', 'snake', 'bear', 'goat', 'hen', 'elephant', 'lion', 'mouse', 'buffalo', 'sheep', 'donkey', 'camel', 'peacock', 'crow', 'butterfly', 'ant', 'rabbit', 'frog', 'deer', 'owl', 'duck', 'sparrow', 'fox'],
+    pe: ['baby', 'doctor', 'girl', 'king', 'queen', 'teacher', 'woman', 'boy', 'man', 'son', 'daughter', 'husband', 'wife', 'neighbour', 'guest', 'student', 'shopkeeper', 'customer', 'granthi', 'ragi', 'volunteer', 'father-in-law', 'mother-in-law', 'son-in-law', 'nephew', 'niece'],
     b: ['arm', 'ear', 'eye', 'face', 'foot', 'hand', 'head', 'heart', 'mouth', 'nose', 'tooth', 'bone', 'leg', 'finger', 'stomach', 'back'],
-    pl: ['city', 'kitchen', 'river', 'road', 'school', 'village', 'zoo', 'garden', 'room', 'bathroom', 'shop', 'market', 'gurdwara', 'hospital', 'park'],
-    f: ['apple', 'egg', 'fruit', 'mango', 'potato', 'vegetable', 'chocolate', 'bread', 'banana', 'onion'],
-    me: ['rice', 'lentils', 'yogurt', 'paneer'], md: ['milk', 'juice', 'tea'], m: ['ice', 'sugar', 'salt', 'butter'], np: ['clothes', 'money'], day: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'],
-    adj: ['brave', 'black', 'pink', 'brown', 'purple', 'grey', 'dirty', 'slow', 'bad', 'beautiful', 'big', 'blue', 'clean', 'cold', 'fast', 'good', 'green', 'hot', 'little', 'new', 'old', 'red', 'sweet', 'white', 'yellow'],
+    pl: ['city', 'kitchen', 'river', 'road', 'school', 'village', 'zoo', 'garden', 'room', 'bathroom', 'shop', 'market', 'gurdwara', 'hospital', 'park', 'bank', 'post office', 'library', 'college', 'hotel', 'airport', 'office', 'courtyard', 'darbar sahib', 'shoe room', 'bus stop', 'playground'],
+    f: ['apple', 'egg', 'fruit', 'mango', 'potato', 'vegetable', 'chocolate', 'bread', 'banana', 'onion', 'tomato', 'carrot', 'cucumber', 'lemon', 'guava', 'pomegranate', 'cake', 'laddoo', 'jalebi', 'almond', 'radish', 'cauliflower'],
+    me: ['rice', 'lentils', 'yogurt', 'paneer'], md: ['milk', 'juice', 'tea', 'lassi', 'coffee'], m: ['ice', 'sugar', 'salt', 'butter', 'ghee', 'oil', 'wheat flour'], np: ['clothes', 'money'], day: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'],
+    adj: ['brave', 'black', 'pink', 'brown', 'purple', 'grey', 'dirty', 'slow', 'bad', 'beautiful', 'big', 'blue', 'clean', 'cold', 'fast', 'good', 'green', 'hot', 'little', 'new', 'old', 'red', 'sweet', 'white', 'yellow', 'thin', 'fat', 'strong', 'weak', 'rich', 'poor', 'wet', 'dry', 'soft', 'hard', 'sour', 'spicy', 'bitter', 'cheap', 'expensive', 'heavy', 'easy', 'difficult', 'golden'],
     adj1: ['better'],
-    v: ['jump', 'laugh', 'play', 'run', 'sleep', 'walk', 'write', 'eat', 'drink', 'read', 'speak', 'cook']
+    v: ['jump', 'laugh', 'play', 'run', 'sleep', 'walk', 'write', 'eat', 'drink', 'read', 'speak', 'cook', 'sing', 'dance', 'swim', 'learn', 'teach']
   },
 
   // Pattern sentences. X = the word. Each lists which classes it works for.
