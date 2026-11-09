@@ -315,8 +315,8 @@
     const step = inLetters ? `Letters · ${8 - PT.letterQs.length} of 8` : `Lesson ${PT.lesson} of ${lessons.length}`;
     const pct = inLetters ? (8 - PT.letterQs.length) / 8 * 15 : 15 + (PT.lesson - 1) / lessons.length * 85;
     let prompt, opts, label;
-    if (q.type === 'name2glyph') { label = 'Which letter is this?'; prompt = `<div class="en-prompt"><span class="gur">${esc(it.name)}</span> · ${esc(it.rom)}</div>`; opts = shuffle([it].concat(distractors(it, 3, 'glyph'))).map(o => ({ id: o.id, html: `<span class="gur">${esc(o.glyph)}</span>`, cls: 'glyph' })); }
-    else if (q.type === 'glyph2name') { label = 'What is this letter called?'; prompt = `<div class="glyph-xl">${esc(it.glyph)}</div>`; opts = shuffle([it].concat(distractors(it, 3, 'rom'))).map(o => ({ id: o.id, html: `<span class="gur">${esc(o.name)}</span><span class="rom">${esc(o.rom)}</span>` })); }
+    if (q.type === 'name2glyph') { label = 'Which letter is this?'; prompt = `<div class="en-prompt">${esc(it.rom)}</div>`; opts = shuffle([it].concat(distractors(it, 3, 'glyph'))).map(o => ({ id: o.id, html: `<span class="gur">${esc(o.glyph)}</span>`, cls: 'glyph' })); }
+    else if (q.type === 'glyph2name') { label = 'What is this letter called?'; prompt = `<div class="glyph-xl">${esc(it.glyph)}</div>`; opts = shuffle([it].concat(distractors(it, 3, 'rom'))).map(o => ({ id: o.id, html: `<span class="rom">${esc(o.rom)}</span>` })); }
     else if (q.type === 'en2pa') { label = 'How do you say this in Punjabi?'; prompt = `<div class="en-prompt">${esc(it.en)}</div>`; opts = shuffle([it].concat(distractors(it, 3, 'pa'))).map(o => ({ id: o.id, html: `<span class="gur">${esc(o.pa)}</span><span class="rom">${esc(o.rom)}</span>` })); }
     else { label = 'What does this mean?'; prompt = `${paHTML(it, 'xl')}<button class="btn ghost" data-hear>🔊 Hear it</button>`; opts = shuffle([it].concat(distractors(it, 3, 'en'))).map(o => ({ id: o.id, html: esc(o.en) })); }
     app.innerHTML = `
@@ -406,9 +406,15 @@
 
   function distractors(it, n, field) {
     const pool = order[it.kind].map(id => items[id]).filter(x => x.id !== it.id && x[field] !== it[field] && x.pa !== it.pa && x.en !== it.en);
-    const near = pool.filter(x => x.lesson <= PR.unlocked);
-    const src = near.length >= n ? near : pool;
-    return shuffle(src).slice(0, n);
+    // same category first (colors with colors, family with family) so the answer can't be guessed by topic,
+    // preferring cards from lessons already open; fill up from the rest only if the category is too small
+    const group = x => it.kind === 'vocab' ? x.cat : it.kind === 'phrase' ? x.group : null;
+    const g = group(it);
+    const near = x => x.lesson <= PR.unlocked;
+    const tiers = g ? [pool.filter(x => group(x) === g && near(x)), pool.filter(x => group(x) === g && !near(x)), pool.filter(near), pool] : [pool.filter(near), pool];
+    const out = [];
+    for (const t of tiers) for (const x of shuffle(t)) { if (out.length >= n) break; if (!out.includes(x) && !out.some(o => o[field] === x[field])) out.push(x); }
+    return out;
   }
 
   function vSession() {
@@ -530,7 +536,7 @@
   function exPickLetter(el, it, card) {
     const opts = shuffle([it].concat(distractors(it, 3, 'glyph')));
     mcRender(el, it, card,
-      `<div class="prompt-label">Find the letter</div><div class="prompt en-prompt"><span class="gur">${esc(it.name)}</span> · ${esc(it.rom)}</div><button class="btn ghost" data-hear>🔊 Hear it</button>`,
+      `<div class="prompt-label">Find the letter</div><div class="prompt en-prompt">${esc(it.rom)}</div><button class="btn ghost" data-hear>🔊 Hear it</button>`,
       opts, o => `<span class="gur">${esc(o.glyph)}</span>`, o => o.id === it.id, 'glyph');
     speak(it);
   }
@@ -538,7 +544,7 @@
     const opts = shuffle([it].concat(distractors(it, 3, 'rom')));
     mcRender(el, it, card,
       `<div class="prompt-label">What is this letter called?</div><div class="prompt glyph-xl">${esc(it.glyph)}</div>`,
-      opts, o => `${setG() ? `<span class="gur">${esc(o.name)}</span>` : ''}<span class="rom">${esc(o.rom)}</span>`, o => o.id === it.id);
+      opts, o => `<span class="rom">${esc(o.rom)}</span>`, o => o.id === it.id);
   }
   function exWordLetter(el, it, card) {
     const words = it.words.filter(w => firstLetter(w.pa) === it.glyph);
@@ -556,7 +562,7 @@
     let tries = 0;
     el.innerHTML = `
       <div class="prompt-label">${write ? 'Write the letter from memory' : 'Trace the letter'}</div>
-      <div class="prompt en-prompt"><span class="gur">${esc(it.name)}</span> · ${esc(it.rom)} <button class="btn ghost" data-k="hear">🔊</button></div>
+      <div class="prompt en-prompt">${write ? '' : `<span class="gur">${esc(it.name)}</span> · `}${esc(it.rom)} <button class="btn ghost" data-k="hear">🔊</button></div>
       <div class="pad-wrap"><canvas class="pad" id="pad" aria-label="Writing pad"></canvas></div>
       <div class="actions" id="padActions"><button class="btn" data-k="undo">↶ Undo</button><button class="btn" data-k="clear">Clear</button><button class="btn teal big" data-k="done">Done ✓</button></div>
       <div id="padFb"></div>`;
